@@ -1,40 +1,21 @@
 {
-	"name": "vscode-github-issue-notebooks",
-	"displayName": "GitHub Issue Notebooks",
-	"version": "0.0.1",
-	"private": false,
-	"description": "GitHub Issue Notebooks for VS Code",
-	"keywords": [
-		"land"
+	"activationEvents": [
+		"onNotebook:github-issues"
 	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandGitHubIssueNotebooks#readme",
+	"author": {
+		"email": "Land@PlayForm.Cloud",
+		"name": "🌆 — Land —",
+		"url": "HTTPS://Land.PlayForm.Cloud"
+	},
+	"browser": "./dist/extension-web.js",
 	"bugs": {
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandGitHubIssueNotebooks/issues"
 	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/LandGitHubIssueNotebooks.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🌆 — Land —",
-		"email": "Land@PlayForm.Cloud",
-		"url": "HTTPS://Land.PlayForm.Cloud"
-	},
-	"type": "module",
-	"main": "./dist/extension-node.js",
-	"browser": "./dist/extension-web.js",
-	"scripts": {
-		"Document": "Document 'Source/**/*.ts'",
-		"compile-lint-test": "npm run ts-compile && npm run lint && npm run unit-test",
-		"deploy": "npx vsce publish --noVerify",
-		"integration-test": "npm run ts-compile && node ./out/test/test-integration/runTest.js",
-		"precommit": "npm run lint",
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"ts-compile": "tsc -b",
-		"unit-test": "npm run ts-compile && npx mocha ./out/test/test-unit",
-		"webpack-compile": "webpack --mode none",
-		"webpack-watch": "webpack --mode none --watch"
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		},
+		"virtualWorkspaces": true
 	},
 	"contributes": {
 		"commands": [
@@ -120,13 +101,11 @@
 			}
 		]
 	},
-	"activationEvents": [
-		"onNotebook:github-issues"
-	],
 	"dependencies": {
 		"@octokit/rest": "20.1.0",
 		"abort-controller": "3.0.0"
 	},
+	"description": "GitHub Issue Notebooks for VS Code",
 	"devDependencies": {
 		"@playform/build": "0.0.7",
 		"@playform/document": "0.0.6",
@@ -136,16 +115,37 @@
 		"raw-loader": "4.0.2",
 		"ts-loader": "9.5.1"
 	},
+	"displayName": "GitHub Issue Notebooks",
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandGitHubIssueNotebooks#readme",
+	"icon": "icon.png",
+	"keywords": [
+		"land"
+	],
+	"l10n": "./l10n",
+	"license": "SEE LICENSE IN LICENSE",
+	"main": "./dist/extension-node.js",
+	"name": "vscode-github-issue-notebooks",
+	"preview": true,
+	"private": false,
 	"publishConfig": {
 		"access": "public"
 	},
-	"icon": "icon.png",
-	"preview": true,
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": true
-		},
-		"virtualWorkspaces": true
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/LandGitHubIssueNotebooks.git"
 	},
-	"l10n": "./l10n"
+	"scripts": {
+		"Document": "Document 'Source/**/*.ts'",
+		"compile-lint-test": "npm run ts-compile && npm run lint && npm run unit-test",
+		"deploy": "npx vsce publish --noVerify",
+		"integration-test": "npm run ts-compile && node ./out/test/test-integration/runTest.js",
+		"precommit": "npm run lint",
+		"prepublishOnly": "Build 'Source/**/*.ts'",
+		"ts-compile": "tsc -b",
+		"unit-test": "npm run ts-compile && npx mocha ./out/test/test-unit",
+		"webpack-compile": "webpack --mode none",
+		"webpack-watch": "webpack --mode none --watch"
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
