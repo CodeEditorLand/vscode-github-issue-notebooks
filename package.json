@@ -124,14 +124,14 @@
 		"onNotebook:github-issues"
 	],
 	"dependencies": {
-		"@octokit/rest": "20.1.0",
+		"@octokit/rest": "20.1.1",
 		"abort-controller": "3.0.0"
 	},
 	"devDependencies": {
 		"@playform/build": "0.0.7",
 		"@playform/document": "0.0.6",
 		"@types/glob": "8.1.0",
-		"@types/node": "20.12.7",
+		"@types/node": "20.12.10",
 		"glob": "10.3.12",
 		"raw-loader": "4.0.2",
 		"ts-loader": "9.5.1"
