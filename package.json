@@ -1,27 +1,7 @@
 {
 	"name": "vscode-github-issue-notebooks",
 	"displayName": "GitHub Issue Notebooks",
-	"version": "0.0.1",
-	"private": false,
 	"description": "GitHub Issue Notebooks for VS Code",
-	"keywords": [
-		"land"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/LandGitHubIssueNotebooks#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/LandGitHubIssueNotebooks/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/LandGitHubIssueNotebooks.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🛬 Land —",
-		"email": "Land@PlayForm.Cloud",
-		"url": "HTTPS://Land.PlayForm.Cloud"
-	},
-	"type": "module",
 	"main": "./dist/extension-node.js",
 	"browser": "./dist/extension-web.js",
 	"scripts": {
@@ -129,15 +109,11 @@
 	},
 	"devDependencies": {
 		"@playform/build": "0.0.7",
-		"@playform/document": "0.0.6",
 		"@types/glob": "8.1.0",
 		"@types/node": "20.12.10",
 		"glob": "10.3.12",
 		"raw-loader": "4.0.2",
 		"ts-loader": "9.5.1"
-	},
-	"publishConfig": {
-		"access": "public"
 	},
 	"icon": "icon.png",
 	"preview": true,
