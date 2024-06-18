@@ -9,7 +9,7 @@
 		"url": "https://github.com/microsoft/vscode-github-issue-notebooks"
 	},
 	"engines": {
-		"vscode": "^1.72.0-insider"
+		"vscode": "1.72.0-insider"
 	},
 	"categories": [
 		"Other"
@@ -124,26 +124,26 @@
 		"deploy": "npx vsce publish --noVerify"
 	},
 	"devDependencies": {
-		"@types/glob": "^8.1.0",
-		"@types/mocha": "^10.0.6",
-		"@types/node": "^20.14.5",
-		"@types/vscode-notebook-renderer": "^1.72.3",
-		"@typescript-eslint/eslint-plugin": "^7.13.1",
-		"@typescript-eslint/parser": "^7.13.1",
-		"eslint": "^9.5.0",
-		"glob": "^10.4.1",
-		"husky": "^9.0.11",
-		"mocha": "^10.4.0",
-		"preact": "^10.22.0",
-		"raw-loader": "^4.0.2",
-		"ts-loader": "^9.5.1",
-		"typescript": "^5.4.5",
-		"vscode-test": "^1.3.0",
-		"webpack": "^5.92.0",
+		"@types/glob": "8.1.0",
+		"@types/mocha": "10.0.6",
+		"@types/node": "20.14.5",
+		"@types/vscode-notebook-renderer": "1.72.3",
+		"@typescript-eslint/eslint-plugin": "7.13.1",
+		"@typescript-eslint/parser": "7.13.1",
+		"eslint": "9.5.0",
+		"glob": "10.4.1",
+		"husky": "9.0.11",
+		"mocha": "10.4.0",
+		"preact": "10.22.0",
+		"raw-loader": "4.0.2",
+		"ts-loader": "9.5.1",
+		"typescript": "5.4.5",
+		"vscode-test": "1.3.0",
+		"webpack": "5.92.0",
 		"webpack-cli": "5.1.4"
 	},
 	"dependencies": {
-		"@octokit/rest": "^20.1.1",
-		"abort-controller": "^3.0.0"
+		"@octokit/rest": "20.1.1",
+		"abort-controller": "3.0.0"
 	}
 }
