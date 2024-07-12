@@ -1,0 +1,13 @@
+.vscode
+.vscode-test
+src/
+out/
+tsconfig.json
+webpack.js
+*.vsix
+node_modules/
+.eslintignore
+.gitignore
+azure-pipelines.yml
+SECURITY.md
+test/
