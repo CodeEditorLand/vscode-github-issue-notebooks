@@ -1,0 +1,19 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "../../out/src/renderer",
+		"rootDir": ".",
+		"lib": [
+			"ES2019",
+			"dom"
+		],
+		"jsx": "react",
+		"jsxFactory": "h",
+		"esModuleInterop": true
+	},
+	"references": [
+		{
+			"path": "../common"
+		}
+	]
+}
