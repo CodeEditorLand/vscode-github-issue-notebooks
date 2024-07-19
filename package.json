@@ -102,15 +102,15 @@
 		"onNotebook:github-issues"
 	],
 	"dependencies": {
-		"@octokit/rest": "21.0.1",
+		"@octokit/rest": "18.5.3",
 		"abort-controller": "3.0.0"
 	},
 	"devDependencies": {
-		"@types/glob": "8.1.0",
-		"@types/node": "20.14.11",
-		"glob": "11.0.0",
+		"@types/glob": "7.1.1",
+		"@types/node": "18.0.0",
+		"glob": "7.1.6",
 		"raw-loader": "4.0.2",
-		"ts-loader": "9.5.1"
+		"ts-loader": "9.1.1"
 	},
 	"icon": "icon.png",
 	"preview": true,
