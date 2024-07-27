@@ -1,13 +1,18 @@
 {
-	"activationEvents": [
-		"onNotebook:github-issues"
-	],
+	"name": "vscode-github-issue-notebooks",
+	"displayName": "GitHub Issue Notebooks",
+	"description": "GitHub Issue Notebooks for VS Code",
+	"main": "./dist/extension-node.js",
 	"browser": "./dist/extension-web.js",
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": true
-		},
-		"virtualWorkspaces": true
+	"scripts": {
+		"compile-lint-test": "npm run ts-compile && npm run lint && npm run unit-test",
+		"deploy": "npx vsce publish --noVerify",
+		"integration-test": "npm run ts-compile && node ./out/test/test-integration/runTest.js",
+		"precommit": "npm run lint",
+		"ts-compile": "tsc -b",
+		"unit-test": "npm run ts-compile && npx mocha ./out/test/test-unit",
+		"webpack-compile": "webpack --mode none",
+		"webpack-watch": "webpack --mode none --watch"
 	},
 	"contributes": {
 		"commands": [
@@ -93,11 +98,13 @@
 			}
 		]
 	},
+	"activationEvents": [
+		"onNotebook:github-issues"
+	],
 	"dependencies": {
 		"@octokit/rest": "18.5.3",
 		"abort-controller": "3.0.0"
 	},
-	"description": "GitHub Issue Notebooks for VS Code",
 	"devDependencies": {
 		"@types/glob": "7.1.1",
 		"@types/node": "18.0.0",
@@ -105,20 +112,13 @@
 		"raw-loader": "4.0.2",
 		"ts-loader": "9.1.1"
 	},
-	"displayName": "GitHub Issue Notebooks",
 	"icon": "icon.png",
-	"l10n": "./l10n",
-	"main": "./dist/extension-node.js",
-	"name": "vscode-github-issue-notebooks",
 	"preview": true,
-	"scripts": {
-		"compile-lint-test": "npm run ts-compile && npm run lint && npm run unit-test",
-		"deploy": "npx vsce publish --noVerify",
-		"integration-test": "npm run ts-compile && node ./out/test/test-integration/runTest.js",
-		"precommit": "npm run lint",
-		"ts-compile": "tsc -b",
-		"unit-test": "npm run ts-compile && npx mocha ./out/test/test-unit",
-		"webpack-compile": "webpack --mode none",
-		"webpack-watch": "webpack --mode none --watch"
-	}
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		},
+		"virtualWorkspaces": true
+	},
+	"l10n": "./l10n"
 }

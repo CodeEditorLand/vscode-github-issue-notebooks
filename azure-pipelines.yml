@@ -1,48 +1,48 @@
 name: $(Date:yyyyMMdd)$(Rev:.r)
 
 trigger:
-  branches:
-    include:
-      - main
+    branches:
+        include:
+            - main
 pr: none
 
 resources:
-  repositories:
-    - repository: templates
-      type: github
-      name: microsoft/vscode-engineering
-      ref: main
-      endpoint: Monaco
+    repositories:
+        - repository: templates
+          type: github
+          name: microsoft/vscode-engineering
+          ref: main
+          endpoint: Monaco
 
 parameters:
-  - name: publishExtension
-    displayName: 🚀 Publish Extension
-    type: boolean
-    default: false
+    - name: publishExtension
+      displayName: 🚀 Publish Extension
+      type: boolean
+      default: false
 
 extends:
-  template: azure-pipelines/extension/stable.yml@templates
-  parameters:
-    # Once localization supports notebook renderers we can include that folder here
-    l10nSourcePaths: ./src/extension
-    buildSteps:
-      - bash: |
-          /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-          echo ">>> Started xvfb"
-        displayName: Start xvfb
-        condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+    template: azure-pipelines/extension/stable.yml@templates
+    parameters:
+        # Once localization supports notebook renderers we can include that folder here
+        l10nSourcePaths: ./src/extension
+        buildSteps:
+            - bash: |
+                  /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+                  echo ">>> Started xvfb"
+              displayName: Start xvfb
+              condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
 
-      - bash: |
-          echo ">>> Compile, unit-test, integration-test"
-          npm i && npm run compile-lint-test
-        displayName: Compile, Lint, Test
-        env:
-          DISPLAY: ':99.0'
+            - bash: |
+                  echo ">>> Compile, unit-test, integration-test"
+                  npm i && npm run compile-lint-test
+              displayName: Compile, Lint, Test
+              env:
+                  DISPLAY: ":99.0"
 
-    tsa:
-      config:
-        areaPath: 'Visual Studio Code Miscellaneous Extensions'
-        serviceTreeID: 'c8cb03c6-176e-40dd-90a5-518de08666dc'
-      enabled: true
+        tsa:
+            config:
+                areaPath: "Visual Studio Code Miscellaneous Extensions"
+                serviceTreeID: "c8cb03c6-176e-40dd-90a5-518de08666dc"
+            enabled: true
 
-    publishExtension: ${{ parameters.publishExtension }}
+        publishExtension: ${{ parameters.publishExtension }}
