@@ -94,16 +94,16 @@
 		]
 	},
 	"dependencies": {
-		"@octokit/rest": "^18.5.3",
-		"abort-controller": "^3.0.0"
+		"@octokit/rest": "18.5.3",
+		"abort-controller": "3.0.0"
 	},
 	"description": "GitHub Issue Notebooks for VS Code",
 	"devDependencies": {
-		"@types/glob": "^7.1.1",
-		"@types/node": "^18.0.0",
-		"glob": "^7.1.6",
-		"raw-loader": "^4.0.2",
-		"ts-loader": "^9.1.1"
+		"@types/glob": "7.1.1",
+		"@types/node": "18.0.0",
+		"glob": "7.1.6",
+		"raw-loader": "4.0.2",
+		"ts-loader": "9.1.1"
 	},
 	"displayName": "GitHub Issue Notebooks",
 	"icon": "icon.png",
