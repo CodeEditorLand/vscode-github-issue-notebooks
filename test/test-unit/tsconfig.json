@@ -1,0 +1,11 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "../../out/test/test-unit",
+	},
+	"references": [
+		{
+			"path": "../../src/extension/tsconfig.json",
+		}
+	]
+}
