@@ -2,29 +2,33 @@
  * Copyright (C) Microsoft Corporation. All rights reserved.
  *--------------------------------------------------------*/
 
-import { h, render } from 'preact';
-import type { ActivationFunction } from 'vscode-notebook-renderer';
-import { AllItems } from './renderer';
-import rendererCss from './renderer.css';
+import { h, render } from "preact";
+import type { ActivationFunction } from "vscode-notebook-renderer";
+
+import { AllItems } from "./renderer";
+import rendererCss from "./renderer.css";
 
 export const activate: ActivationFunction = () => {
-	const style = document.createElement('style');
-	style.type = 'text/css';
+	const style = document.createElement("style");
+	style.type = "text/css";
 	style.textContent = rendererCss;
 
 	return {
 		renderOutputItem(info, element) {
 			let shadow = element.shadowRoot;
 			if (!shadow) {
-				shadow = element.attachShadow({ mode: 'open' });
+				shadow = element.attachShadow({ mode: "open" });
 
 				shadow.append(style.cloneNode(true));
 
-				const root = document.createElement('div');
-				root.id = 'root';
+				const root = document.createElement("div");
+				root.id = "root";
 				shadow.append(root);
 			}
-			render(<AllItems items={info.json()} />, shadow.querySelector('#root')!);
+			render(
+				<AllItems items={info.json()} />,
+				shadow.querySelector("#root")!,
+			);
 		},
 	};
 };
