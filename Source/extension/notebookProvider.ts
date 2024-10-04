@@ -4,38 +4,37 @@
  *--------------------------------------------------------------------------------------------*/
 
 import AbortController from "abort-controller";
-import * as vscode from 'vscode';
-import { SearchIssuesAndPullRequestsResponseItemsItem } from '../common/types';
+import * as vscode from "vscode";
+
+import { SearchIssuesAndPullRequestsResponseItemsItem } from "../common/types";
 import { OctokitProvider } from "./octokitProvider";
 import { NodeType, Utils } from "./parser/nodes";
-import { ProjectContainer } from './project';
-import { isRunnable, isUsingAtMe } from './utils';
+import { ProjectContainer } from "./project";
+import { isRunnable, isUsingAtMe } from "./utils";
 
+export const mimeGithubIssues = "x-application/github-issues";
 
-export const mimeGithubIssues = 'x-application/github-issues';
-
-const atMeLink = '[`@me`](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax#queries-with-usernames)';
+const atMeLink =
+	"[`@me`](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/understanding-the-search-syntax#queries-with-usernames)";
 
 // --- running queries
 
 export class IssuesNotebookKernel {
-
 	private readonly _controller: vscode.NotebookController;
 	private _executionOrder = 0;
 
 	constructor(
 		readonly container: ProjectContainer,
-		readonly octokit: OctokitProvider
+		readonly octokit: OctokitProvider,
 	) {
-
 		this._controller = vscode.notebooks.createNotebookController(
-			'githubIssueKernel',
-			'github-issues',
-			'github.com',
+			"githubIssueKernel",
+			"github-issues",
+			"github.com",
 		);
-		this._controller.supportedLanguages = ['github-issues'];
+		this._controller.supportedLanguages = ["github-issues"];
 		this._controller.supportsExecutionOrder = true;
-		this._controller.description = 'GitHub';
+		this._controller.description = "GitHub";
 		this._controller.executeHandler = this._executeAll.bind(this);
 	}
 
@@ -54,7 +53,6 @@ export class IssuesNotebookKernel {
 	}
 
 	private async _doExecuteCell(cell: vscode.NotebookCell): Promise<void> {
-
 		const doc = await vscode.workspace.openTextDocument(cell.document.uri);
 		const project = this.container.lookupProject(doc.uri);
 		const query = project.getOrCreate(doc);
@@ -66,7 +64,6 @@ export class IssuesNotebookKernel {
 		exec.executionOrder = ++this._executionOrder;
 		exec.start(Date.now());
 
-
 		if (!isRunnable(query)) {
 			exec.end(true);
 			return;
@@ -75,24 +72,34 @@ export class IssuesNotebookKernel {
 		if (!this.octokit.isAuthenticated) {
 			const atMe = isUsingAtMe(query, project);
 			if (atMe > 0) {
-				const message = atMe > 1
-					? vscode.l10n.t({
-						message: 'This query depends on {0} to specify the current user. For that to work you need to be [logged in](command:github-issues.authNow).',
-						args: [atMeLink],
-						comment: [
-							'The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated',
-							'{Locked="](command:github-issues.authNow)"}'
-						]
-					})
-					: vscode.l10n.t({
-						message: 'This query uses {0} to specify the current user. For that to work you need to be [logged in](command:github-issues.authNow).',
-						args: [atMeLink],
-						comment: [
-							'The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated',
-							'{Locked="](command:github-issues.authNow)"}'
-						]
-					});
-				exec.replaceOutput(new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.text(message, 'text/markdown')]));
+				const message =
+					atMe > 1
+						? vscode.l10n.t({
+								message:
+									"This query depends on {0} to specify the current user. For that to work you need to be [logged in](command:github-issues.authNow).",
+								args: [atMeLink],
+								comment: [
+									"The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated",
+									'{Locked="](command:github-issues.authNow)"}',
+								],
+							})
+						: vscode.l10n.t({
+								message:
+									"This query uses {0} to specify the current user. For that to work you need to be [logged in](command:github-issues.authNow).",
+								args: [atMeLink],
+								comment: [
+									"The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated",
+									'{Locked="](command:github-issues.authNow)"}',
+								],
+							});
+				exec.replaceOutput(
+					new vscode.NotebookCellOutput([
+						vscode.NotebookCellOutputItem.text(
+							message,
+							"text/markdown",
+						),
+					]),
+				);
 				exec.end(false);
 				return;
 			}
@@ -104,7 +111,7 @@ export class IssuesNotebookKernel {
 		// fetch
 		try {
 			const abortCtl = new AbortController();
-			exec.token.onCancellationRequested(_ => abortCtl.abort());
+			exec.token.onCancellationRequested((_) => abortCtl.abort());
 
 			for (let queryData of allQueryData) {
 				const octokit = await this.octokit.lib();
@@ -112,15 +119,16 @@ export class IssuesNotebookKernel {
 				let page = 1;
 				let count = 0;
 				while (!exec.token.isCancellationRequested) {
-
-					const response = await octokit.search.issuesAndPullRequests({
-						q: queryData.q,
-						sort: (<any>queryData.sort),
-						order: queryData.order,
-						per_page: 100,
-						page,
-						request: { signal: abortCtl.signal }
-					});
+					const response = await octokit.search.issuesAndPullRequests(
+						{
+							q: queryData.q,
+							sort: <any>queryData.sort,
+							order: queryData.order,
+							per_page: 100,
+							page,
+							request: { signal: abortCtl.signal },
+						},
+					);
 					count += response.data.items.length;
 					allItems = allItems.concat(<any>response.data.items);
 					tooLarge = tooLarge || response.data.total_count > 1000;
@@ -131,29 +139,57 @@ export class IssuesNotebookKernel {
 				}
 			}
 		} catch (err) {
-			if (err instanceof Error && err.message.includes('Authenticated requests get a higher rate limit')) {
+			if (
+				err instanceof Error &&
+				err.message.includes(
+					"Authenticated requests get a higher rate limit",
+				)
+			) {
 				// ugly error-message checking for anon-rate-limit. where are the error codes?
 				const message = vscode.l10n.t({
-					message: 'You have exceeded the rate limit for anonymous querying. You can [log in](command:github-issues.authNow) to continue querying.',
+					message:
+						"You have exceeded the rate limit for anonymous querying. You can [log in](command:github-issues.authNow) to continue querying.",
 					comment: [
-						'The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated',
-						'{Locked="](command:github-issues.authNow)"}'
-					]
+						"The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated",
+						'{Locked="](command:github-issues.authNow)"}',
+					],
 				});
-				exec.replaceOutput(new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.text(message, 'text/markdown')]));
-			} else if (err instanceof Error && err.message.includes('The listed users cannot be searched')) {
+				exec.replaceOutput(
+					new vscode.NotebookCellOutput([
+						vscode.NotebookCellOutputItem.text(
+							message,
+							"text/markdown",
+						),
+					]),
+				);
+			} else if (
+				err instanceof Error &&
+				err.message.includes("The listed users cannot be searched")
+			) {
 				const message = vscode.l10n.t({
-					message: 'This query uses {0} to specify the current user. For that to work you need to be [logged in](command:github-issues.authNow).',
+					message:
+						"This query uses {0} to specify the current user. For that to work you need to be [logged in](command:github-issues.authNow).",
 					args: [atMeLink],
 					comment: [
-						'The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated',
-						'{Locked="](command:github-issues.authNow)"}'
-					]
+						"The [...](command:...) will be rendered as a markdown link. Only the contents of the square brackets should be translated",
+						'{Locked="](command:github-issues.authNow)"}',
+					],
 				});
-				exec.replaceOutput(new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.text(message, 'text/markdown')]));
+				exec.replaceOutput(
+					new vscode.NotebookCellOutput([
+						vscode.NotebookCellOutputItem.text(
+							message,
+							"text/markdown",
+						),
+					]),
+				);
 			} else {
 				// print as error
-				exec.replaceOutput(new vscode.NotebookCellOutput([vscode.NotebookCellOutputItem.error(err)]));
+				exec.replaceOutput(
+					new vscode.NotebookCellOutput([
+						vscode.NotebookCellOutputItem.error(err),
+					]),
+				);
 			}
 			exec.end(false);
 			return;
@@ -161,14 +197,19 @@ export class IssuesNotebookKernel {
 
 		// sort
 		const [first] = allQueryData;
-		const comparator = allQueryData.length >= 2 && allQueryData.every(item => item.sort === first.sort) && cmp.byName.get(first.sort!);
+		const comparator =
+			allQueryData.length >= 2 &&
+			allQueryData.every((item) => item.sort === first.sort) &&
+			cmp.byName.get(first.sort!);
 		if (comparator) {
-			allItems.sort(first.sort === 'asc' ? cmp.invert(comparator) : comparator);
+			allItems.sort(
+				first.sort === "asc" ? cmp.invert(comparator) : comparator,
+			);
 		}
 
 		// "render"
 		const seen = new Set<string>();
-		let md = '';
+		let md = "";
 		for (let item of allItems) {
 			if (seen.has(item.url)) {
 				continue;
@@ -178,25 +219,35 @@ export class IssuesNotebookKernel {
 			// markdown
 			md += `- [#${item.number}](${item.html_url}) ${item.title}`;
 			if (item.labels.length > 0) {
-				md += ` [${item.labels.map(label => `${label.name}`).join(', ')}] `;
+				md += ` [${item.labels.map((label) => `${label.name}`).join(", ")}] `;
 			}
 			if (item.assignee) {
-				md += `- [@${item.assignee.login}](${item.assignee.html_url} "${vscode.l10n.t('Issue {0} is assigned to {1}', item.number, item.assignee.login)}")\n`;
+				md += `- [@${item.assignee.login}](${item.assignee.html_url} "${vscode.l10n.t("Issue {0} is assigned to {1}", item.number, item.assignee.login)}")\n`;
 			}
-			md += '\n';
+			md += "\n";
 		}
 
 		// status line
-		exec.replaceOutput([new vscode.NotebookCellOutput([
-			vscode.NotebookCellOutputItem.json(allItems, mimeGithubIssues),
-			vscode.NotebookCellOutputItem.text(md, 'text/markdown'),
-		], { itemCount: allItems.length })]);
+		exec.replaceOutput([
+			new vscode.NotebookCellOutput(
+				[
+					vscode.NotebookCellOutputItem.json(
+						allItems,
+						mimeGithubIssues,
+					),
+					vscode.NotebookCellOutputItem.text(md, "text/markdown"),
+				],
+				{ itemCount: allItems.length },
+			),
+		]);
 
 		exec.end(true, Date.now());
 	}
 
-	private async _collectDependentCells(cell: vscode.NotebookCell, bucket: Set<vscode.NotebookCell>): Promise<void> {
-
+	private async _collectDependentCells(
+		cell: vscode.NotebookCell,
+		bucket: Set<vscode.NotebookCell>,
+	): Promise<void> {
 		const project = this.container.lookupProject(cell.notebook.uri);
 		const query = project.getOrCreate(cell.document);
 
@@ -213,7 +264,7 @@ export class IssuesNotebookKernel {
 			}
 			seen.add(query.id);
 
-			Utils.walk(query, node => {
+			Utils.walk(query, (node) => {
 				if (node._type === NodeType.VariableName) {
 					const symbol = project.symbols.getFirst(node.value);
 					if (symbol) {
@@ -233,23 +284,27 @@ export class IssuesNotebookKernel {
 
 // --- status bar
 
-export class IssuesStatusBarProvider implements vscode.NotebookCellStatusBarItemProvider {
-
-	provideCellStatusBarItems(cell: vscode.NotebookCell): vscode.NotebookCellStatusBarItem | undefined {
-		const count = <number | undefined>cell.outputs[0]?.metadata?.['itemCount'];
-		if (typeof count !== 'number') {
+export class IssuesStatusBarProvider
+	implements vscode.NotebookCellStatusBarItemProvider
+{
+	provideCellStatusBarItems(
+		cell: vscode.NotebookCell,
+	): vscode.NotebookCellStatusBarItem | undefined {
+		const count = <number | undefined>(
+			cell.outputs[0]?.metadata?.["itemCount"]
+		);
+		if (typeof count !== "number") {
 			return;
 		}
 		const item = new vscode.NotebookCellStatusBarItem(
-			'$(globe) ' + vscode.l10n.t('Open {0} results', count),
+			"$(globe) " + vscode.l10n.t("Open {0} results", count),
 			vscode.NotebookCellStatusBarAlignment.Right,
 		);
-		item.command = 'github-issues.openAll';
-		item.tooltip = vscode.l10n.t('Open {0} results in browser', count);
+		item.command = "github-issues.openAll";
+		item.tooltip = vscode.l10n.t("Open {0} results in browser", count);
 		return item;
 	}
 }
-
 
 // --- serializer
 
@@ -269,16 +324,14 @@ declare class TextEncoder {
 }
 
 export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
-
 	private readonly _decoder = new TextDecoder();
 	private readonly _encoder = new TextEncoder();
 
 	deserializeNotebook(data: Uint8Array): vscode.NotebookData {
-		let contents = '';
+		let contents = "";
 		try {
 			contents = this._decoder.decode(data);
-		} catch {
-		}
+		} catch {}
 
 		let raw: RawNotebookCell[];
 		try {
@@ -288,11 +341,14 @@ export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
 			raw = [];
 		}
 
-		const cells = raw.map(item => new vscode.NotebookCellData(
-			item.kind,
-			item.value,
-			item.language
-		));
+		const cells = raw.map(
+			(item) =>
+				new vscode.NotebookCellData(
+					item.kind,
+					item.value,
+					item.language,
+				),
+		);
 
 		return new vscode.NotebookData(cells);
 	}
@@ -303,7 +359,7 @@ export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
 			contents.push({
 				kind: cell.kind,
 				language: cell.languageId,
-				value: cell.value
+				value: cell.value,
 			});
 		}
 		return this._encoder.encode(JSON.stringify(contents, undefined, 2));
@@ -311,28 +367,39 @@ export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
 }
 
 namespace cmp {
-
-	export type ItemComparator = (a: SearchIssuesAndPullRequestsResponseItemsItem, b: SearchIssuesAndPullRequestsResponseItemsItem) => number;
+	export type ItemComparator = (
+		a: SearchIssuesAndPullRequestsResponseItemsItem,
+		b: SearchIssuesAndPullRequestsResponseItemsItem,
+	) => number;
 
 	export const byName = new Map([
-		['comments', compareByComments],
-		['created', compareByCreated],
-		['updated', compareByUpdated],
+		["comments", compareByComments],
+		["created", compareByCreated],
+		["updated", compareByUpdated],
 	]);
 
 	export function invert<T>(compare: (a: T, b: T) => number) {
 		return (a: T, b: T) => compare(a, b) * -1;
 	}
 
-	export function compareByComments(a: SearchIssuesAndPullRequestsResponseItemsItem, b: SearchIssuesAndPullRequestsResponseItemsItem): number {
+	export function compareByComments(
+		a: SearchIssuesAndPullRequestsResponseItemsItem,
+		b: SearchIssuesAndPullRequestsResponseItemsItem,
+	): number {
 		return a.comments - b.comments;
 	}
 
-	export function compareByCreated(a: SearchIssuesAndPullRequestsResponseItemsItem, b: SearchIssuesAndPullRequestsResponseItemsItem): number {
+	export function compareByCreated(
+		a: SearchIssuesAndPullRequestsResponseItemsItem,
+		b: SearchIssuesAndPullRequestsResponseItemsItem,
+	): number {
 		return Date.parse(a.created_at) - Date.parse(b.created_at);
 	}
 
-	export function compareByUpdated(a: SearchIssuesAndPullRequestsResponseItemsItem, b: SearchIssuesAndPullRequestsResponseItemsItem): number {
+	export function compareByUpdated(
+		a: SearchIssuesAndPullRequestsResponseItemsItem,
+		b: SearchIssuesAndPullRequestsResponseItemsItem,
+	): number {
 		return Date.parse(a.updated_at) - Date.parse(b.updated_at);
 	}
 }

@@ -3,30 +3,57 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { LiteralNode, Node, NodeType, QualifiedValueNode, QueryDocumentNode, QueryNode, RangeNode, SimpleNode, Utils, VariableDefinitionNode } from "./nodes";
+import {
+	LiteralNode,
+	Node,
+	NodeType,
+	QualifiedValueNode,
+	QueryDocumentNode,
+	QueryNode,
+	RangeNode,
+	SimpleNode,
+	Utils,
+	VariableDefinitionNode,
+} from "./nodes";
 import { TokenType } from "./scanner";
-import { QualifiedValueNodeSchema, RepeatInfo, SymbolTable, ValueSet, ValueType } from "./symbols";
+import {
+	QualifiedValueNodeSchema,
+	RepeatInfo,
+	SymbolTable,
+	ValueSet,
+	ValueType,
+} from "./symbols";
 
 export const enum Code {
-	NodeMissing = 'NodeMissing',
-	OrNotAllowed = 'OrNotAllowed',
-	SequenceNotAllowed = 'SequenceNotAllowed',
-	VariableDefinedRecursive = 'VariableDefinedRecursive',
-	VariableUnknown = 'VariableUnknown',
-	ValueConflict = 'ValueConflict',
-	ValueUnknown = 'ValueUnknown',
-	ValueTypeUnknown = 'ValueTypeUnknown',
-	QualifierUnknown = 'QualifierUnknown',
-	RangeMixesTypes = 'RangeMixesTypes',
+	NodeMissing = "NodeMissing",
+	OrNotAllowed = "OrNotAllowed",
+	SequenceNotAllowed = "SequenceNotAllowed",
+	VariableDefinedRecursive = "VariableDefinedRecursive",
+	VariableUnknown = "VariableUnknown",
+	ValueConflict = "ValueConflict",
+	ValueUnknown = "ValueUnknown",
+	ValueTypeUnknown = "ValueTypeUnknown",
+	QualifierUnknown = "QualifierUnknown",
+	RangeMixesTypes = "RangeMixesTypes",
 
-	GitHubLoginNeeded = 'GitHubLoginNeeded'
+	GitHubLoginNeeded = "GitHubLoginNeeded",
 }
 
-
-export type ValidationError = GenericError | QualifierUnknownError | ValueConflictError | ValueUnknownError | ValueTypeError | MissingNodeError | MixedTypesError;
+export type ValidationError =
+	| GenericError
+	| QualifierUnknownError
+	| ValueConflictError
+	| ValueUnknownError
+	| ValueTypeError
+	| MissingNodeError
+	| MixedTypesError;
 
 export interface GenericError {
-	readonly code: Code.OrNotAllowed | Code.SequenceNotAllowed | Code.VariableDefinedRecursive | Code.VariableUnknown;
+	readonly code:
+		| Code.OrNotAllowed
+		| Code.SequenceNotAllowed
+		| Code.VariableDefinedRecursive
+		| Code.VariableUnknown;
 	readonly node: Node;
 }
 
@@ -69,9 +96,12 @@ export interface MixedTypesError {
 	readonly valueB: ValueType | undefined;
 }
 
-export function validateQueryDocument(doc: QueryDocumentNode, symbols: SymbolTable): Iterable<ValidationError> {
+export function validateQueryDocument(
+	doc: QueryDocumentNode,
+	symbols: SymbolTable,
+): Iterable<ValidationError> {
 	const result: ValidationError[] = [];
-	Utils.walk(doc, node => {
+	Utils.walk(doc, (node) => {
 		switch (node._type) {
 			case NodeType.VariableDefinition:
 				_validateVariableDefinition(node, result);
@@ -84,34 +114,45 @@ export function validateQueryDocument(doc: QueryDocumentNode, symbols: SymbolTab
 	return result;
 }
 
-function _validateVariableDefinition(defNode: VariableDefinitionNode, bucket: ValidationError[]) {
-
+function _validateVariableDefinition(
+	defNode: VariableDefinitionNode,
+	bucket: ValidationError[],
+) {
 	if (defNode.value._type === NodeType.Missing) {
-		bucket.push({ node: defNode, code: Code.NodeMissing, expected: defNode.value.expected, hint: false });
+		bucket.push({
+			node: defNode,
+			code: Code.NodeMissing,
+			expected: defNode.value.expected,
+			hint: false,
+		});
 		return;
 	}
 
-	// var-decl: no OR-statement 
-	Utils.walk(defNode.value, node => {
+	// var-decl: no OR-statement
+	Utils.walk(defNode.value, (node) => {
 		if (node._type === NodeType.Any && node.tokenType === TokenType.OR) {
 			bucket.push({ node, code: Code.OrNotAllowed });
 		}
-		if (node._type === NodeType.VariableName && node.value === defNode.name.value) {
+		if (
+			node._type === NodeType.VariableName &&
+			node.value === defNode.name.value
+		) {
 			bucket.push({ node, code: Code.VariableDefinedRecursive });
 		}
 	});
 }
 
-function _validateQuery(query: QueryNode, bucket: ValidationError[], symbols: SymbolTable): void {
-
+function _validateQuery(
+	query: QueryNode,
+	bucket: ValidationError[],
+	symbols: SymbolTable,
+): void {
 	const mutual = new Map<any, Node>();
 
 	// validate children
 	for (let node of query.nodes) {
-
 		if (node._type === NodeType.QualifiedValue) {
 			_validateQualifiedValue(node, bucket, symbols, mutual);
-
 		} else if (node._type === NodeType.VariableName) {
 			// variable-name => must exist
 			const info = symbols.getFirst(node.value);
@@ -122,8 +163,12 @@ function _validateQuery(query: QueryNode, bucket: ValidationError[], symbols: Sy
 	}
 }
 
-function _validateQualifiedValue(node: QualifiedValueNode, bucket: ValidationError[], symbols: SymbolTable, conflicts: Map<any, Node>): void {
-
+function _validateQualifiedValue(
+	node: QualifiedValueNode,
+	bucket: ValidationError[],
+	symbols: SymbolTable,
+	conflicts: Map<any, Node>,
+): void {
 	// check name first
 	const info = QualifiedValueNodeSchema.get(node.qualifier.value);
 	if (!info && node.value._type === NodeType.Missing) {
@@ -135,10 +180,17 @@ function _validateQualifiedValue(node: QualifiedValueNode, bucket: ValidationErr
 		return;
 	}
 
-	if (info.repeatable === RepeatInfo.No || !node.not && info.repeatable === RepeatInfo.RepeatNegated) {
-		const key = `${node.not ? '-' : ''}${node.qualifier.value}`;
+	if (
+		info.repeatable === RepeatInfo.No ||
+		(!node.not && info.repeatable === RepeatInfo.RepeatNegated)
+	) {
+		const key = `${node.not ? "-" : ""}${node.qualifier.value}`;
 		if (conflicts.has(key)) {
-			bucket.push({ node, code: Code.ValueConflict, conflictNode: conflicts.get(key)! });
+			bucket.push({
+				node,
+				code: Code.ValueConflict,
+				conflictNode: conflicts.get(key)!,
+			});
 		} else {
 			conflicts.set(key, node);
 		}
@@ -151,7 +203,6 @@ function _validateQualifiedValue(node: QualifiedValueNode, bucket: ValidationErr
 	// check value
 
 	const validateValue = (valueNode: SimpleNode) => {
-
 		// get the 'actual' value
 		if (valueNode._type === NodeType.Compare) {
 			valueNode = valueNode.value;
@@ -161,7 +212,12 @@ function _validateQualifiedValue(node: QualifiedValueNode, bucket: ValidationErr
 
 		// missing => done
 		if (info && valueNode._type === NodeType.Missing) {
-			bucket.push({ node: valueNode, code: Code.NodeMissing, expected: valueNode.expected, hint: true });
+			bucket.push({
+				node: valueNode,
+				code: Code.NodeMissing,
+				expected: valueNode.expected,
+				hint: true,
+			});
 			return;
 		}
 
@@ -188,18 +244,36 @@ function _validateQualifiedValue(node: QualifiedValueNode, bucket: ValidationErr
 		}
 
 		if (info.type !== valueType) {
-			bucket.push({ node: valueNode, code: Code.ValueTypeUnknown, actual: value!, expected: info.type });
+			bucket.push({
+				node: valueNode,
+				code: Code.ValueTypeUnknown,
+				actual: value!,
+				expected: info.type,
+			});
 			return;
 		}
 
 		if (info.enumValues && info.placeholderType === undefined) {
-			let set = value && info.enumValues.find(set => set.entries.has(value!) ? set : undefined);
+			let set =
+				value &&
+				info.enumValues.find((set) =>
+					set.entries.has(value!) ? set : undefined,
+				);
 			if (!set) {
 				// value not known
-				bucket.push({ node: valueNode, code: Code.ValueUnknown, actual: value!, expected: info.enumValues });
+				bucket.push({
+					node: valueNode,
+					code: Code.ValueUnknown,
+					actual: value!,
+					expected: info.enumValues,
+				});
 			} else if (conflicts.has(set) && set.exclusive) {
 				// other value from set in use
-				bucket.push({ node, code: Code.ValueConflict, conflictNode: conflicts.get(set)! });
+				bucket.push({
+					node,
+					code: Code.ValueConflict,
+					conflictNode: conflicts.get(set)!,
+				});
 			} else {
 				conflicts.set(set, node);
 			}
@@ -216,13 +290,22 @@ function _validateQualifiedValue(node: QualifiedValueNode, bucket: ValidationErr
 	}
 }
 
-function _validateRange(node: RangeNode, bucket: ValidationError[], symbol: SymbolTable) {
+function _validateRange(
+	node: RangeNode,
+	bucket: ValidationError[],
+	symbol: SymbolTable,
+) {
 	// ensure both ends are of equal types
 	if (node.open && node.close) {
 		const typeOpen = Utils.getTypeOfNode(node.open, symbol);
 		const typeClose = Utils.getTypeOfNode(node.close, symbol);
 		if (typeOpen !== typeClose) {
-			bucket.push({ node, code: Code.RangeMixesTypes, valueA: typeOpen, valueB: typeClose });
+			bucket.push({
+				node,
+				code: Code.RangeMixesTypes,
+				valueA: typeOpen,
+				valueB: typeClose,
+			});
 		}
 	}
 }

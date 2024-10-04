@@ -1843,9 +1843,8 @@ const _emojiMap: Record<string, string> = JSON.parse(`{
   "wales": "🏴󠁧󠁢󠁷󠁬󠁳󠁿"
 }`);
 
-
 export function withEmoji(str: string): string {
-  return str.replace(/:(\w+(_\w+))*:/gi, (m, g1) => {
-    return _emojiMap[g1] ?? m;
-  });
+	return str.replace(/:(\w+(_\w+))*:/gi, (m, g1) => {
+		return _emojiMap[g1] ?? m;
+	});
 }
