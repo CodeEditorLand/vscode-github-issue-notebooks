@@ -26,6 +26,7 @@ export function* getAllRepos(project: Project): Generator<RepoInfo> {
 				node.qualifier.value === "repo"
 			) {
 				let value: string | undefined;
+
 				if (node.value._type === NodeType.VariableName) {
 					// repo:$SOME_VAR
 					value = project.symbols.getFirst(node.value.value)?.value;
@@ -47,9 +48,12 @@ export function* getAllRepos(project: Project): Generator<RepoInfo> {
 
 	for (let string of repoStrings) {
 		let idx = string.indexOf("/");
+
 		if (idx > 0) {
 			const owner = string.substring(0, idx);
+
 			const repo = string.substring(idx + 1);
+
 			yield { owner, repo };
 		}
 	}
@@ -73,6 +77,7 @@ export function isUsingAtMe(query: Node, project: Project): number {
 			) {
 				// check variables
 				let symbol = project.symbols.getFirst(node.value);
+
 				if (symbol) {
 					result += 2 * isUsingAtMe(symbol.def, project);
 				}
@@ -82,11 +87,13 @@ export function isUsingAtMe(query: Node, project: Project): number {
 				node.value.value === "@me"
 			) {
 				const info = QualifiedValueNodeSchema.get(node.qualifier.value);
+
 				if (info?.placeholderType === ValuePlaceholderType.Username) {
 					result = 1;
 				}
 			}
 		}
 	});
+
 	return result;
 }

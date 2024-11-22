@@ -41,17 +41,23 @@ export class HoverProvider implements vscode.HoverProvider {
 		position: vscode.Position,
 	) {
 		const offset = document.offsetAt(position);
+
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		const parents: Node[] = [];
+
 		const node = Utils.nodeAt(query, offset, parents);
 
 		if (node?._type === NodeType.VariableName) {
 			let info: SymbolInfo | undefined;
+
 			for (let candidate of project.symbols.getAll(node.value)) {
 				//
 				if (!info) {
 					info = candidate;
+
 					continue;
 				}
 				if (
@@ -80,6 +86,7 @@ export class HoverProvider implements vscode.HoverProvider {
 			parents[parents.length - 2]?._type === NodeType.QualifiedValue
 		) {
 			const info = QualifiedValueNodeSchema.get(node.value);
+
 			return (
 				(info?.description && new vscode.Hover(info.description)) ||
 				undefined
@@ -98,13 +105,19 @@ export class SelectionRangeProvider implements vscode.SelectionRangeProvider {
 		positions: vscode.Position[],
 	) {
 		const result: vscode.SelectionRange[] = [];
+
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		for (let position of positions) {
 			const offset = document.offsetAt(position);
+
 			const parents: Node[] = [];
+
 			if (Utils.nodeAt(query, offset, parents)) {
 				let last: vscode.SelectionRange | undefined;
+
 				for (let node of parents) {
 					let selRange = new vscode.SelectionRange(
 						project.rangeOf(node),
@@ -131,9 +144,13 @@ export class DocumentHighlightProvider
 		position: vscode.Position,
 	): vscode.ProviderResult<vscode.DocumentHighlight[]> {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const node = Utils.nodeAt(query, offset);
+
 		if (node?._type !== NodeType.VariableName) {
 			return;
 		}
@@ -153,6 +170,7 @@ export class DocumentHighlightProvider
 				);
 			}
 		});
+
 		return Promise.all(result);
 	}
 }
@@ -165,13 +183,18 @@ export class DefinitionProvider implements vscode.DefinitionProvider {
 		position: vscode.Position,
 	) {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const node = Utils.nodeAt(query, offset);
+
 		if (node?._type !== NodeType.VariableName) {
 			return;
 		}
 		const result: vscode.Location[] = [];
+
 		for (const symbol of project.symbols.getAll(node.value)) {
 			result.push(project.getLocation(symbol.def));
 		}
@@ -188,14 +211,19 @@ export class ReferenceProvider implements vscode.ReferenceProvider {
 		context: vscode.ReferenceContext,
 	): vscode.ProviderResult<vscode.Location[]> {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const node = Utils.nodeAt(query, offset);
+
 		if (node?._type !== NodeType.VariableName) {
 			return;
 		}
 
 		let result: vscode.Location[] = [];
+
 		for (let entry of project.all()) {
 			Utils.walk(entry.node, (candidate, parent) => {
 				if (
@@ -225,9 +253,13 @@ export class RenameProvider implements vscode.RenameProvider {
 
 	prepareRename(document: vscode.TextDocument, position: vscode.Position) {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const node = Utils.nodeAt(query, offset);
+
 		if (node?._type !== NodeType.VariableName) {
 			throw Error("Only variables names can be renamed");
 		}
@@ -240,8 +272,11 @@ export class RenameProvider implements vscode.RenameProvider {
 		newName: string,
 	) {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const node = Utils.nodeAt(query, offset);
 
 		if (node?._type === NodeType.VariableName) {
@@ -250,6 +285,7 @@ export class RenameProvider implements vscode.RenameProvider {
 				newName = "$" + newName;
 			}
 			const scanner = new Scanner().reset(newName);
+
 			if (
 				scanner.next().type !== TokenType.VariableName ||
 				scanner.next().type !== TokenType.EOF
@@ -257,6 +293,7 @@ export class RenameProvider implements vscode.RenameProvider {
 				throw new Error(`invalid name: ${newName}`);
 			}
 			const edit = new vscode.WorkspaceEdit();
+
 			for (let entry of project.all()) {
 				Utils.walk(entry.node, (candidate) => {
 					if (
@@ -289,6 +326,7 @@ export class FormattingProvider
 		ch: string,
 	) {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
 
 		const nodes: Node[] = [];
@@ -300,6 +338,7 @@ export class FormattingProvider
 				node._type === NodeType.VariableDefinition ||
 				node._type === NodeType.OrExpression,
 		);
+
 		if (target) {
 			return this._formatNode(project, query, target);
 		}
@@ -310,17 +349,22 @@ export class FormattingProvider
 		range: vscode.Range,
 	) {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
 
 		// find node starting and ending in range
 		let target: Node = query;
+
 		const nodesStart: Node[] = [];
+
 		const nodesEnd: Node[] = [];
 		Utils.nodeAt(query, document.offsetAt(range.start), nodesStart);
 		Utils.nodeAt(query, document.offsetAt(range.end), nodesEnd);
+
 		for (let node of nodesStart) {
 			if (nodesEnd.includes(node)) {
 				target = node;
+
 				break;
 			}
 		}
@@ -343,8 +387,10 @@ export class FormattingProvider
 		}
 		// format whole document
 		let result: vscode.TextEdit[] = [];
+
 		for (let child of node.nodes) {
 			const range = project.rangeOf(child);
+
 			const newText = this._printForFormatting(query, child);
 			result.push(vscode.TextEdit.replace(range, newText));
 		}
@@ -376,11 +422,13 @@ export class DocumentSemanticTokensProvider
 
 	provideDocumentSemanticTokens(document: vscode.TextDocument) {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
 
 		const builder = new vscode.SemanticTokensBuilder();
 		Utils.walk(query, (node) => {
 			let token: Token | undefined;
+
 			if (node._type === NodeType.OrExpression) {
 				token = node.or;
 			}
@@ -389,6 +437,7 @@ export class DocumentSemanticTokensProvider
 				builder.push(line, character, token.end - token.start, 0);
 			}
 		});
+
 		return builder.build();
 	}
 }
@@ -403,10 +452,15 @@ export class CompletionItemProvider implements vscode.CompletionItemProvider {
 		position: vscode.Position,
 	): vscode.ProviderResult<vscode.CompletionItem[]> {
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const parents: Node[] = [];
+
 		const node = Utils.nodeAt(query, offset, parents) ?? query;
+
 		const parent = parents[parents.length - 2];
 
 		if (parent?._type === NodeType.LiteralSequence) {
@@ -421,9 +475,13 @@ export class CompletionItemProvider implements vscode.CompletionItemProvider {
 		) {
 			// RHS of a qualified value => complete value set
 			const replacing = project.rangeOf(node);
+
 			const inserting = replacing.with(undefined, position);
+
 			const result: vscode.CompletionItem[] = [];
+
 			const info = QualifiedValueNodeSchema.get(parent.qualifier.value);
+
 			if (info?.enumValues) {
 				for (let set of info.enumValues) {
 					for (let value of set.entries) {
@@ -479,6 +537,7 @@ export class QuickFixProvider implements vscode.CodeActionProvider {
 		context: vscode.CodeActionContext,
 	) {
 		const result: vscode.CodeAction[] = [];
+
 		for (let diag of context.diagnostics) {
 			if (
 				diag instanceof LanguageValidationDiagnostic &&
@@ -520,6 +579,7 @@ export class QuickFixProvider implements vscode.CodeActionProvider {
 
 			if (diag.code === Code.GitHubLoginNeeded) {
 				const loginForAtMe = vscode.l10n.t("Login for {0}", "@me");
+
 				const action = new vscode.CodeAction(
 					loginForAtMe,
 					vscode.CodeActionKind.QuickFix,
@@ -552,16 +612,22 @@ export class ExtractVariableProvider implements vscode.CodeActionProvider {
 		}
 
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
 
 		// find common ancestor
 		const start = document.offsetAt(range.start);
+
 		const end = document.offsetAt(range.end);
+
 		const startStack: Node[] = [];
+
 		const endStack: Node[] = [];
 		Utils.nodeAt(query, start, startStack);
 		Utils.nodeAt(query, end, endStack);
+
 		let ancestor: Node | undefined = undefined;
+
 		for (let i = 0; i < startStack.length && endStack.length; i++) {
 			if (startStack[i] !== endStack[i]) {
 				break;
@@ -596,6 +662,7 @@ export class ExtractVariableProvider implements vscode.CodeActionProvider {
 				new vscode.SnippetString().appendText("$").appendTabstop(1),
 			),
 		]);
+
 		return [action];
 	}
 }
@@ -611,6 +678,7 @@ export class NotebookSplitOrIntoCellProvider
 		_context: vscode.CodeActionContext,
 	): vscode.ProviderResult<vscode.CodeAction[]> {
 		let cell: vscode.NotebookCell | undefined;
+
 		for (let candidate of vscode.workspace.notebookDocuments) {
 			for (let item of candidate.getCells()) {
 				if (item.document === document) {
@@ -623,21 +691,27 @@ export class NotebookSplitOrIntoCellProvider
 		}
 
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
 
 		const result: vscode.CodeAction[] = [];
+
 		for (const node of query.nodes) {
 			if (node._type === NodeType.OrExpression) {
 				const orNodeRange = project.rangeOf(node, document.uri);
+
 				if (!_range.intersection(orNodeRange)) {
 					continue;
 				}
 
 				const nodes: QueryNode[] = [];
+
 				const stack = [node];
+
 				while (stack.length > 0) {
 					let s = stack.pop()!;
 					nodes.push(s.left);
+
 					if (s.right._type === NodeType.OrExpression) {
 						stack.push(s.right);
 					} else {
@@ -711,6 +785,7 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 		}
 
 		let cell: vscode.NotebookCell | undefined;
+
 		for (let candidate of vscode.workspace.notebookDocuments) {
 			for (let item of candidate.getCells()) {
 				if (item.document === document) {
@@ -723,9 +798,11 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 		}
 
 		const project = this.container.lookupProject(document.uri);
+
 		const query = project.getOrCreate(document);
 
 		let usesVariables = false;
+
 		let definesVariables = false;
 
 		Utils.walk(query, (node, parent) => {
@@ -742,6 +819,7 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 		}
 
 		const filename = `${cell.notebook.uri.path.substring(cell.notebook.uri.path.lastIndexOf("/") + 1)}-cell-${Math.random().toString(16).slice(2, 7)}.github-issues`;
+
 		const newNotebookUri = vscode.Uri.joinPath(
 			cell.notebook.uri,
 			`../${filename}`,
@@ -769,6 +847,7 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 			title: "Show Notebook",
 			arguments: [newNotebookUri],
 		};
+
 		if (!definesVariables) {
 			action.edit.set(cell.notebook.uri, [
 				vscode.NotebookEdit.deleteCells(
@@ -797,11 +876,13 @@ export class VariableNamesSourceAction implements vscode.CodeActionProvider {
 
 		// (1) find all defined variables, map them onto upper-cased name
 		const defs = new Map<string, string>();
+
 		for (let entry of project.all()) {
 			Utils.walk(entry.node, (node) => {
 				switch (node._type) {
 					case NodeType.VariableDefinition:
 						const newName = node.name.value.toUpperCase();
+
 						if (node.name.value !== newName) {
 							defs.set(node.name.value, newName);
 						}
@@ -812,6 +893,7 @@ export class VariableNamesSourceAction implements vscode.CodeActionProvider {
 
 		// (2) make sure not to collide with existing names
 		let counter = 1;
+
 		for (const [oldName, newName] of defs) {
 			if (defs.has(newName)) {
 				// conflict
@@ -821,10 +903,12 @@ export class VariableNamesSourceAction implements vscode.CodeActionProvider {
 
 		// (3) create edits for all occurrences
 		const edit = new vscode.WorkspaceEdit();
+
 		for (let entry of project.all()) {
 			Utils.walk(entry.node, (candidate) => {
 				if (candidate._type === NodeType.VariableName) {
 					const newName = defs.get(candidate.value);
+
 					if (newName && newName !== candidate.value) {
 						edit.replace(
 							entry.doc.uri,
@@ -845,6 +929,7 @@ export class VariableNamesSourceAction implements vscode.CodeActionProvider {
 		const codeAction = new vscode.CodeAction("Normalize Variable Names");
 		codeAction.kind = VariableNamesSourceAction.kind;
 		codeAction.edit = edit;
+
 		return [codeAction];
 	}
 }
@@ -862,11 +947,17 @@ export class GithubOrgCompletions implements vscode.CompletionItemProvider {
 		position: vscode.Position,
 	) {
 		const project = this.container.lookupProject(document.uri);
+
 		const doc = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const parents: Node[] = [];
+
 		const node = Utils.nodeAt(doc, offset, parents) ?? doc;
+
 		const qualified = parents[parents.length - 2];
+
 		const query = parents[parents.length - 3];
 
 		if (
@@ -881,13 +972,16 @@ export class GithubOrgCompletions implements vscode.CompletionItemProvider {
 			document.positionAt(qualified.value.start),
 			position,
 		);
+
 		const replacing = new vscode.Range(
 			document.positionAt(qualified.value.start),
 			document.positionAt(qualified.value.end),
 		);
+
 		const range = { inserting, replacing };
 
 		const octokit = await this.octokitProvider.lib();
+
 		if (!this.octokitProvider.isAuthenticated) {
 			return;
 		}
@@ -896,10 +990,13 @@ export class GithubOrgCompletions implements vscode.CompletionItemProvider {
 
 		if (info?.placeholderType === ValuePlaceholderType.Orgname) {
 			type OrgInfo = { login: string };
+
 			const user = await octokit.users.getAuthenticated();
+
 			const options = octokit.orgs.listForUser.endpoint.merge({
 				username: user.data.login,
 			});
+
 			return octokit
 				.paginate<OrgInfo>(<any>options)
 				.then((values) =>
@@ -915,11 +1012,13 @@ export class GithubOrgCompletions implements vscode.CompletionItemProvider {
 				html_url: string;
 				description: string;
 			};
+
 			const response = await octokit.repos.listForAuthenticatedUser({
 				per_page: 100,
 				sort: "pushed",
 				affiliation: "owner,collaborator",
 			});
+
 			return (<RepoInfo[]>response.data).map((value) => ({
 				label: value.full_name,
 				range,
@@ -946,11 +1045,17 @@ export class GithubRepoSearchCompletions
 		position: vscode.Position,
 	) {
 		const project = this.container.lookupProject(document.uri);
+
 		const doc = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
+
 		const parents: Node[] = [];
+
 		const node = Utils.nodeAt(doc, offset, parents) ?? doc;
+
 		const qualified = parents[parents.length - 2];
+
 		const query = parents[parents.length - 3];
 
 		if (
@@ -962,6 +1067,7 @@ export class GithubRepoSearchCompletions
 		}
 
 		const info = QualifiedValueNodeSchema.get(qualified.qualifier.value);
+
 		if (info?.placeholderType !== ValuePlaceholderType.Repository) {
 			return;
 		}
@@ -970,28 +1076,34 @@ export class GithubRepoSearchCompletions
 			document.positionAt(qualified.value.start),
 			position,
 		);
+
 		const replacing = new vscode.Range(
 			document.positionAt(qualified.value.start),
 			document.positionAt(qualified.value.end),
 		);
+
 		const range = { inserting, replacing };
 
 		// craft repo-query
 		const len = document.offsetAt(position) - qualified.value.start;
+
 		let q = Utils.print(
 			qualified.value,
 			doc.text,
 			(name) => project.symbols.getFirst(name)?.value,
 		).substr(0, len);
+
 		if (!q) {
 			return new vscode.CompletionList([], true);
 		}
 		const idx = q.indexOf("/");
+
 		if (idx > 0) {
 			q = `org:${q.substr(0, idx)} ${q.substr(idx + 1)}`;
 		}
 
 		const octokit = await this.octokitProvider.lib();
+
 		const repos = await octokit.search.repos({ q, per_page: 10 });
 
 		// create completion items
@@ -1006,7 +1118,9 @@ export class GithubRepoSearchCompletions
 		});
 
 		const incomplete = repos.data.total_count > repos.data.items.length;
+
 		const result = new vscode.CompletionList(items, incomplete);
+
 		return result;
 	}
 }
@@ -1026,7 +1140,9 @@ export class GithubPlaceholderCompletions
 		position: vscode.Position,
 	) {
 		const project = this.container.lookupProject(document.uri);
+
 		const doc = project.getOrCreate(document);
+
 		const offset = document.offsetAt(position);
 
 		// node chain at offset
@@ -1035,24 +1151,34 @@ export class GithubPlaceholderCompletions
 
 		// find query, qualified, maybe sequence, and literal in the node chain
 		let query: QueryNode | undefined;
+
 		let qualified: QualifiedValueNode | undefined;
+
 		let sequence: LiteralSequenceNode | undefined;
+
 		let literal: Node | undefined;
 
 		for (const node of parents) {
 			switch (node._type) {
 				case NodeType.Query:
 					query = node;
+
 					break;
+
 				case NodeType.QualifiedValue:
 					qualified = node;
+
 					break;
+
 				case NodeType.LiteralSequence:
 					sequence = node;
+
 					break;
+
 				case NodeType.Literal:
 				case NodeType.Missing:
 					literal = node;
+
 					break;
 			}
 		}
@@ -1067,17 +1193,20 @@ export class GithubPlaceholderCompletions
 		}
 
 		const repos = getAllRepos(project);
+
 		const info = QualifiedValueNodeSchema.get(qualified.qualifier.value);
 
 		let range = {
 			inserting: new vscode.Range(position, position),
 			replacing: new vscode.Range(position, position),
 		};
+
 		if (literal) {
 			const inserting = new vscode.Range(
 				document.positionAt(literal.start),
 				position,
 			);
+
 			const replacing = new vscode.Range(
 				document.positionAt(literal.start),
 				document.positionAt(literal.end),
@@ -1111,12 +1240,14 @@ export class GithubPlaceholderCompletions
 
 		for (let info of repos) {
 			const labels = await this._githubData.getOrFetchLabels(info);
+
 			for (const label of labels) {
 				if (isUseInSequence?.has(label.name)) {
 					continue;
 				}
 
 				let existing = result.get(label.name);
+
 				if (existing) {
 					existing.detail = undefined;
 					existing.kind = vscode.CompletionItemKind.Constant;
@@ -1153,11 +1284,13 @@ export class GithubPlaceholderCompletions
 		for (let info of repos) {
 			const milestones =
 				await this._githubData.getOrFetchMilestones(info);
+
 			for (let milestone of milestones) {
 				if (milestone.state === "closed") {
 					continue;
 				}
 				let existing = result.get(milestone.title);
+
 				if (existing) {
 					existing.documentation = undefined;
 					existing.sortText =
@@ -1189,6 +1322,7 @@ export class GithubPlaceholderCompletions
 		range?: { inserting: vscode.Range; replacing: vscode.Range },
 	) {
 		const result = new Map<string, vscode.CompletionItem>();
+
 		for (let info of repos) {
 			for (let user of await this._githubData.getOrFetchUsers(info)) {
 				if (!result.has(user.login)) {
@@ -1217,6 +1351,7 @@ export abstract class IProjectValidation {
 
 	clearProject(project: Project) {
 		let collection = this._collections.get(project);
+
 		if (collection) {
 			collection.dispose();
 			this._collections.delete(project);
@@ -1229,29 +1364,36 @@ class LanguageValidationDiagnostic extends vscode.Diagnostic {
 		switch (error.code) {
 			case Code.NodeMissing:
 				return vscode.l10n.t("Expected {0}", error.expected.join(", "));
+
 			case Code.OrNotAllowed:
 				return vscode.l10n.t(
 					"OR is not supported when defining a variable",
 				);
+
 			case Code.VariableDefinedRecursive:
 				return vscode.l10n.t(
 					"Cannot reference a variable from its definition",
 				);
+
 			case Code.VariableUnknown:
 				return vscode.l10n.t(`Unknown variable`);
+
 			case Code.QualifierUnknown:
 				return vscode.l10n.t(
 					"Unknown qualifier: '{0}'",
 					error.node.value,
 				);
+
 			case Code.ValueConflict:
 				return vscode.l10n.t("This conflicts with another usage");
+
 			case Code.ValueTypeUnknown:
 				return vscode.l10n.t(
 					"Unknown value '{0}', expected type '{1}'",
 					error.actual,
 					error.expected,
 				);
+
 			case Code.ValueUnknown:
 				return vscode.l10n.t(
 					"Unknown value '{0}', expected one of '{1}'",
@@ -1261,8 +1403,10 @@ class LanguageValidationDiagnostic extends vscode.Diagnostic {
 						.flat()
 						.join(", "),
 				);
+
 			case Code.SequenceNotAllowed:
 				return vscode.l10n.t(`Sequence of values is not allowed`);
+
 			case Code.RangeMixesTypes:
 				return vscode.l10n.t(
 					"This range uses mixed values: {0} and {1}`",
@@ -1309,6 +1453,7 @@ class LanguageValidationDiagnostic extends vscode.Diagnostic {
 export class LanguageValidation extends IProjectValidation {
 	validateProject(project: Project) {
 		let collection = this._collections.get(project);
+
 		if (!collection) {
 			collection = vscode.languages.createDiagnosticCollection();
 			this._collections.set(project, collection);
@@ -1318,6 +1463,7 @@ export class LanguageValidation extends IProjectValidation {
 
 		for (let { node, doc } of project.all()) {
 			const newDiagnostics: vscode.Diagnostic[] = [];
+
 			for (let error of validateQueryDocument(node, project.symbols)) {
 				newDiagnostics.push(
 					new LanguageValidationDiagnostic(error, project, doc),
@@ -1338,6 +1484,7 @@ export class GithubValidation extends IProjectValidation {
 
 	validateProject(project: Project, token: vscode.CancellationToken) {
 		let collection = this._collections.get(project);
+
 		if (!collection) {
 			collection = vscode.languages.createDiagnosticCollection();
 			this._collections.set(project, collection);
@@ -1346,12 +1493,14 @@ export class GithubValidation extends IProjectValidation {
 		}
 
 		const repos = Array.from(getAllRepos(project));
+
 		if (repos.length === 0) {
 			return;
 		}
 
 		for (let { node: queryDoc, doc } of project.all()) {
 			const newDiagnostics: vscode.Diagnostic[] = [];
+
 			const work: Promise<any>[] = [];
 			Utils.walk(queryDoc, async (node, parent) => {
 				if (
@@ -1477,6 +1626,7 @@ export class GithubValidation extends IProjectValidation {
 					return;
 				}
 				let collection = this._collections.get(project);
+
 				if (collection && project.has(doc)) {
 					// project or document might have been dismissed already
 					collection.set(doc.uri, newDiagnostics);
@@ -1487,9 +1637,12 @@ export class GithubValidation extends IProjectValidation {
 
 	private async _checkLabels(label: string, repos: RepoInfo[]) {
 		let result: RepoInfo[] = [];
+
 		for (const info of repos) {
 			const labels = await this.githubData.getOrFetchLabels(info);
+
 			const found = labels.find((info) => info.name === label);
+
 			if (!found) {
 				result.push(info);
 			}
@@ -1499,9 +1652,12 @@ export class GithubValidation extends IProjectValidation {
 
 	private async _checkMilestones(milestone: string, repos: RepoInfo[]) {
 		let result: RepoInfo[] = [];
+
 		for (let info of repos) {
 			const labels = await this.githubData.getOrFetchMilestones(info);
+
 			const found = labels.find((info) => info.title === milestone);
+
 			if (!found) {
 				result.push(info);
 			}
@@ -1519,9 +1675,11 @@ export class Validation {
 		readonly validation: IProjectValidation[],
 	) {
 		let cts = new vscode.CancellationTokenSource();
+
 		function validateAllSoon(delay = 300) {
 			cts.cancel();
 			cts = new vscode.CancellationTokenSource();
+
 			let handle = setTimeout(() => {
 				for (let project of container.all()) {
 					for (let strategy of validation) {
@@ -1575,6 +1733,7 @@ export function registerLanguageProvider(
 	octokit: OctokitProvider,
 ): vscode.Disposable {
 	const disposables: vscode.Disposable[] = [];
+
 	const githubData = new GithubData(octokit);
 
 	vscode.languages.setLanguageConfiguration(selector.language, {

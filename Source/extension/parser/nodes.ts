@@ -155,40 +155,53 @@ export namespace Utils {
 		const stack: Array<Node | undefined> = [undefined, node]; //parent, node
 		while (stack.length > 0) {
 			let parent = stack.shift();
+
 			let node = stack.shift();
+
 			if (!node) {
 				continue;
 			}
 			callback(node, parent);
+
 			switch (node._type) {
 				case NodeType.Compare:
 					stack.unshift(node.value);
 					stack.unshift(node);
+
 					break;
+
 				case NodeType.Range:
 					stack.unshift(node.close);
 					stack.unshift(node);
 					stack.unshift(node.open);
 					stack.unshift(node);
+
 					break;
+
 				case NodeType.QualifiedValue:
 					stack.unshift(node.value);
 					stack.unshift(node);
 					stack.unshift(node.qualifier);
 					stack.unshift(node);
+
 					break;
+
 				case NodeType.VariableDefinition:
 					stack.unshift(node.value);
 					stack.unshift(node);
 					stack.unshift(node.name);
 					stack.unshift(node);
+
 					break;
+
 				case NodeType.OrExpression:
 					stack.unshift(node.right);
 					stack.unshift(node);
 					stack.unshift(node.left);
 					stack.unshift(node);
+
 					break;
+
 				case NodeType.LiteralSequence:
 				case NodeType.Query:
 				case NodeType.QueryDocument:
@@ -213,6 +226,7 @@ export namespace Utils {
 				result = node;
 			}
 		});
+
 		return result;
 	}
 
@@ -235,19 +249,24 @@ export namespace Utils {
 				case NodeType.Missing:
 					// no value for those
 					return "";
+
 				case NodeType.VariableName:
 					// look up variable (must be defined first)
 					return variableValue(node.value) ?? `${node.value}`;
+
 				case NodeType.Any:
 				case NodeType.Literal:
 				case NodeType.Date:
 				case NodeType.Number:
 					return text.substring(node.start, node.end);
+
 				case NodeType.LiteralSequence:
 					return node.nodes.map(_print).join(",");
+
 				case NodeType.Compare:
 					// >=aaa etc
 					return `${node.cmp}${_print(node.value)}`;
+
 				case NodeType.Range:
 					// aaa..bbb, *..ccc, ccc..*
 					return node.open && node.close
@@ -255,16 +274,21 @@ export namespace Utils {
 						: node.open
 							? `${_print(node.open)}..*`
 							: `*..${_print(node.close!)}`;
+
 				case NodeType.QualifiedValue:
 					// aaa:bbb
 					return `${node.not ? "-" : ""}${node.qualifier.value}:${_print(node.value)}`;
+
 				case NodeType.Query:
 					// aaa bbb ccc
 					// note: ignores `sortby`-part
 					let result = "";
+
 					let lastEnd = -1;
+
 					for (let child of node.nodes) {
 						let value = _print(child);
+
 						if (value) {
 							result +=
 								lastEnd !== -1 && child.start !== lastEnd
@@ -275,6 +299,7 @@ export namespace Utils {
 						lastEnd = child.end;
 					}
 					return result;
+
 				default:
 					return "???";
 			}
@@ -289,14 +314,19 @@ export namespace Utils {
 		switch (node._type) {
 			case NodeType.VariableName:
 				return symbols.getFirst(node.value)?.type;
+
 			case NodeType.Date:
 				return ValueType.Date;
+
 			case NodeType.Number:
 				return ValueType.Number;
+
 			case NodeType.Literal:
 				return ValueType.Literal;
+
 			case NodeType.Compare:
 				return getTypeOfNode(node.value, symbols);
+
 			case NodeType.Range:
 				if (node.open) {
 					return getTypeOfNode(node.open, symbols);

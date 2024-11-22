@@ -57,6 +57,7 @@ export class SymbolTable {
 		for (let node of query.nodes) {
 			if (node._type === NodeType.VariableDefinition) {
 				let array = this._data.get(query.id);
+
 				if (!array) {
 					array = [];
 					this._data.set(query.id, array);
@@ -79,6 +80,7 @@ export class SymbolTable {
 
 	getFirst(name: string): SymbolInfo | undefined {
 		let candidate: SymbolInfo | undefined;
+
 		for (let bucket of this._data.values()) {
 			for (let info of bucket) {
 				if (info.name === name) {

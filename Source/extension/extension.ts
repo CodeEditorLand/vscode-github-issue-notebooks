@@ -17,6 +17,7 @@ import { ProjectContainer } from "./project";
 
 export function activate(context: vscode.ExtensionContext) {
 	const octokit = new OctokitProvider();
+
 	const projectContainer = new ProjectContainer();
 
 	context.subscriptions.push(

@@ -50,6 +50,7 @@ export function registerCommands(
 							items = JSON.parse(
 								new TextDecoder().decode(item.data),
 							);
+
 							break out;
 						}
 					}
@@ -60,6 +61,7 @@ export function registerCommands(
 
 				if (items.length > 10) {
 					const ok = vscode.l10n.t("OK");
+
 					const option = await vscode.window.showInformationMessage(
 						vscode.l10n.t(
 							"This will open {0} browser tabs. Do you want to continue?",
@@ -68,6 +70,7 @@ export function registerCommands(
 						{ modal: true },
 						ok,
 					);
+
 					if (option !== ok) {
 						return;
 					}
@@ -89,14 +92,17 @@ export function registerCommands(
 					cell.document.uri,
 					false,
 				);
+
 				if (!project) {
 					return;
 				}
 				const data = project.queryData(
 					project.getOrCreate(cell.document),
 				);
+
 				for (let d of data) {
 					let url = `https://github.com/issues?q=${d.q}`;
+
 					if (d.sort) {
 						url += ` sort:${d.sort}`;
 					}

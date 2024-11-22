@@ -15,12 +15,14 @@ export class OctokitProvider {
 
 	async lib(createIfNone?: boolean) {
 		const oldIsAuth = this._isAuthenticated;
+
 		try {
 			const session = await vscode.authentication.getSession(
 				"github",
 				["repo"],
 				{ createIfNone },
 			);
+
 			if (session) {
 				this._octokit = new Octokit({ auth: session.accessToken });
 				this._isAuthenticated = true;

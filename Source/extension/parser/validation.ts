@@ -105,12 +105,16 @@ export function validateQueryDocument(
 		switch (node._type) {
 			case NodeType.VariableDefinition:
 				_validateVariableDefinition(node, result);
+
 				break;
+
 			case NodeType.Query:
 				_validateQuery(node, result, symbols);
+
 				break;
 		}
 	});
+
 	return result;
 }
 
@@ -125,6 +129,7 @@ function _validateVariableDefinition(
 			expected: defNode.value.expected,
 			hint: false,
 		});
+
 		return;
 	}
 
@@ -156,6 +161,7 @@ function _validateQuery(
 		} else if (node._type === NodeType.VariableName) {
 			// variable-name => must exist
 			const info = symbols.getFirst(node.value);
+
 			if (!info) {
 				bucket.push({ node, code: Code.VariableUnknown });
 			}
@@ -171,12 +177,14 @@ function _validateQualifiedValue(
 ): void {
 	// check name first
 	const info = QualifiedValueNodeSchema.get(node.qualifier.value);
+
 	if (!info && node.value._type === NodeType.Missing) {
 		// skip -> likely not a key-value-expression
 		return;
 	}
 	if (!info) {
 		bucket.push({ node: node.qualifier, code: Code.QualifierUnknown });
+
 		return;
 	}
 
@@ -185,6 +193,7 @@ function _validateQualifiedValue(
 		(!node.not && info.repeatable === RepeatInfo.RepeatNegated)
 	) {
 		const key = `${node.not ? "-" : ""}${node.qualifier.value}`;
+
 		if (conflicts.has(key)) {
 			bucket.push({
 				node,
@@ -218,12 +227,15 @@ function _validateQualifiedValue(
 				expected: valueNode.expected,
 				hint: true,
 			});
+
 			return;
 		}
 
 		// variable => get type/value
 		let valueType: ValueType | undefined;
+
 		let value: string | undefined;
+
 		if (valueNode._type === NodeType.VariableName) {
 			// variable value type
 			const symbol = symbols.getFirst(valueNode.value);
@@ -250,6 +262,7 @@ function _validateQualifiedValue(
 				actual: value!,
 				expected: info.type,
 			});
+
 			return;
 		}
 
@@ -259,6 +272,7 @@ function _validateQualifiedValue(
 				info.enumValues.find((set) =>
 					set.entries.has(value!) ? set : undefined,
 				);
+
 			if (!set) {
 				// value not known
 				bucket.push({
@@ -298,7 +312,9 @@ function _validateRange(
 	// ensure both ends are of equal types
 	if (node.open && node.close) {
 		const typeOpen = Utils.getTypeOfNode(node.open, symbol);
+
 		const typeClose = Utils.getTypeOfNode(node.close, symbol);
+
 		if (typeOpen !== typeClose) {
 			bucket.push({
 				node,

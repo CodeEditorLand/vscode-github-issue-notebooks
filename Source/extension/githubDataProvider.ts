@@ -37,7 +37,9 @@ export class GithubData {
 		fetch: () => Promise<T[]>,
 	) {
 		const key = type + info.owner + info.repo;
+
 		let result = this._cache.get(key);
+
 		if (!result) {
 			result = fetch();
 			this._cache.set(key, result);
@@ -48,9 +50,11 @@ export class GithubData {
 	async getOrFetchLabels(info: RepoInfo): Promise<LabelInfo[]> {
 		return this._getOrFetch<LabelInfo>("labels", info, async () => {
 			const octokit = await this.octokitProvider.lib();
+
 			const options = octokit.issues.listLabelsForRepo.endpoint.merge({
 				...info,
 			});
+
 			return octokit.paginate<LabelInfo>(<any>options);
 		});
 	}
@@ -58,11 +62,13 @@ export class GithubData {
 	async getOrFetchMilestones(info: RepoInfo): Promise<MilestoneInfo[]> {
 		return this._getOrFetch<MilestoneInfo>("milestone", info, async () => {
 			const octokit = await this.octokitProvider.lib();
+
 			const options = octokit.issues.listMilestones.endpoint.merge({
 				...info,
 				state: "all",
 				sort: "due_on",
 			});
+
 			return octokit.paginate<MilestoneInfo>(<any>options);
 		});
 	}
@@ -70,9 +76,11 @@ export class GithubData {
 	async getOrFetchUsers(info: RepoInfo): Promise<UserInfo[]> {
 		return this._getOrFetch<UserInfo>("user", info, async () => {
 			const octokit = await this.octokitProvider.lib();
+
 			const options = octokit.repos.listContributors.endpoint.merge({
 				...info,
 			});
+
 			return octokit.paginate<UserInfo>(<any>options);
 		});
 	}

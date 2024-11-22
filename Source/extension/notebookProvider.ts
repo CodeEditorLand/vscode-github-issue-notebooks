@@ -44,6 +44,7 @@ export class IssuesNotebookKernel {
 
 	private _executeAll(cells: vscode.NotebookCell[]): void {
 		const all = new Set<vscode.NotebookCell>();
+
 		for (const cell of cells) {
 			this._collectDependentCells(cell, all);
 		}
@@ -54,7 +55,9 @@ export class IssuesNotebookKernel {
 
 	private async _doExecuteCell(cell: vscode.NotebookCell): Promise<void> {
 		const doc = await vscode.workspace.openTextDocument(cell.document.uri);
+
 		const project = this.container.lookupProject(doc.uri);
+
 		const query = project.getOrCreate(doc);
 
 		// update query so that symbols defined here are marked as more recent
@@ -66,11 +69,13 @@ export class IssuesNotebookKernel {
 
 		if (!isRunnable(query)) {
 			exec.end(true);
+
 			return;
 		}
 
 		if (!this.octokit.isAuthenticated) {
 			const atMe = isUsingAtMe(query, project);
+
 			if (atMe > 0) {
 				const message =
 					atMe > 1
@@ -101,12 +106,15 @@ export class IssuesNotebookKernel {
 					]),
 				);
 				exec.end(false);
+
 				return;
 			}
 		}
 
 		const allQueryData = project.queryData(query);
+
 		let allItems: SearchIssuesAndPullRequestsResponseItemsItem[] = [];
+
 		let tooLarge = false;
 		// fetch
 		try {
@@ -117,7 +125,9 @@ export class IssuesNotebookKernel {
 				const octokit = await this.octokit.lib();
 
 				let page = 1;
+
 				let count = 0;
+
 				while (!exec.token.isCancellationRequested) {
 					const response = await octokit.search.issuesAndPullRequests(
 						{
@@ -132,6 +142,7 @@ export class IssuesNotebookKernel {
 					count += response.data.items.length;
 					allItems = allItems.concat(<any>response.data.items);
 					tooLarge = tooLarge || response.data.total_count > 1000;
+
 					if (count >= Math.min(1000, response.data.total_count)) {
 						break;
 					}
@@ -192,15 +203,18 @@ export class IssuesNotebookKernel {
 				);
 			}
 			exec.end(false);
+
 			return;
 		}
 
 		// sort
 		const [first] = allQueryData;
+
 		const comparator =
 			allQueryData.length >= 2 &&
 			allQueryData.every((item) => item.sort === first.sort) &&
 			cmp.byName.get(first.sort!);
+
 		if (comparator) {
 			allItems.sort(
 				first.sort === "asc" ? cmp.invert(comparator) : comparator,
@@ -209,7 +223,9 @@ export class IssuesNotebookKernel {
 
 		// "render"
 		const seen = new Set<string>();
+
 		let md = "";
+
 		for (let item of allItems) {
 			if (seen.has(item.url)) {
 				continue;
@@ -218,6 +234,7 @@ export class IssuesNotebookKernel {
 
 			// markdown
 			md += `- [#${item.number}](${item.html_url}) ${item.title}`;
+
 			if (item.labels.length > 0) {
 				md += ` [${item.labels.map((label) => `${label.name}`).join(", ")}] `;
 			}
@@ -249,13 +266,16 @@ export class IssuesNotebookKernel {
 		bucket: Set<vscode.NotebookCell>,
 	): Promise<void> {
 		const project = this.container.lookupProject(cell.notebook.uri);
+
 		const query = project.getOrCreate(cell.document);
 
 		const seen = new Set<string>();
+
 		const stack = [query];
 
 		while (true) {
 			const query = stack.pop();
+
 			if (!query) {
 				break;
 			}
@@ -267,6 +287,7 @@ export class IssuesNotebookKernel {
 			Utils.walk(query, (node) => {
 				if (node._type === NodeType.VariableName) {
 					const symbol = project.symbols.getFirst(node.value);
+
 					if (symbol) {
 						stack.push(symbol.root);
 					}
@@ -293,6 +314,7 @@ export class IssuesStatusBarProvider
 		const count = <number | undefined>(
 			cell.outputs[0]?.metadata?.["itemCount"]
 		);
+
 		if (typeof count !== "number") {
 			return;
 		}
@@ -302,6 +324,7 @@ export class IssuesStatusBarProvider
 		);
 		item.command = "github-issues.openAll";
 		item.tooltip = vscode.l10n.t("Open {0} results in browser", count);
+
 		return item;
 	}
 }
@@ -329,11 +352,13 @@ export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
 
 	deserializeNotebook(data: Uint8Array): vscode.NotebookData {
 		let contents = "";
+
 		try {
 			contents = this._decoder.decode(data);
 		} catch {}
 
 		let raw: RawNotebookCell[];
+
 		try {
 			raw = <RawNotebookCell[]>JSON.parse(contents);
 		} catch {
@@ -355,6 +380,7 @@ export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
 
 	serializeNotebook(data: vscode.NotebookData): Uint8Array {
 		let contents: RawNotebookCell[] = [];
+
 		for (let cell of data.cells) {
 			contents.push({
 				kind: cell.kind,

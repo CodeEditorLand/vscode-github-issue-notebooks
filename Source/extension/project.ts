@@ -21,6 +21,7 @@ export class Project {
 		string,
 		{
 			versionParsed: number;
+
 			doc: vscode.TextDocument;
 			node: QueryDocumentNode;
 		}
@@ -31,6 +32,7 @@ export class Project {
 
 	getOrCreate(doc: vscode.TextDocument): QueryDocumentNode {
 		let value = this._cached.get(doc.uri.toString());
+
 		if (!value || value.versionParsed !== doc.version) {
 			const text = doc.getText();
 			value = {
@@ -68,6 +70,7 @@ export class Project {
 			throw new Error("unknown node");
 		}
 		const entry = this._cached.get(uri.toString());
+
 		if (!entry) {
 			throw new Error("unknown file" + uri);
 		}
@@ -76,6 +79,7 @@ export class Project {
 
 	rangeOf(node: Node, uri?: vscode.Uri) {
 		const entry = this._lookUp(node, uri);
+
 		return new vscode.Range(
 			entry.doc.positionAt(node.start),
 			entry.doc.positionAt(node.end),
@@ -84,15 +88,18 @@ export class Project {
 
 	textOf(node: Node, uri?: vscode.Uri) {
 		const { doc } = this._lookUp(node, uri);
+
 		const range = new vscode.Range(
 			doc.positionAt(node.start),
 			doc.positionAt(node.end),
 		);
+
 		return doc.getText(range);
 	}
 
 	getLocation(node: Node) {
 		const data = this._lookUp(node);
+
 		return new vscode.Location(
 			data.doc.uri,
 			new vscode.Range(
@@ -108,6 +115,7 @@ export class Project {
 
 		function fillInQuery(node: QueryNode) {
 			let sort: string | undefined;
+
 			let order: "asc" | "desc" | undefined;
 
 			// TODO@jrieken
@@ -118,10 +126,12 @@ export class Project {
 				queryNode.text,
 				variableAccess,
 			);
+
 			const query = textWithSortBy
 				.replace(/sort:([\w-+\d]+)-(asc|desc)/g, function (_m, g1, g2) {
 					sort = g1 ?? undefined;
 					order = g2 ?? undefined;
+
 					return "";
 				})
 				.trim();
@@ -137,7 +147,9 @@ export class Project {
 			switch (node._type) {
 				case NodeType.Query:
 					fillInQuery(node);
+
 					break;
+
 				case NodeType.OrExpression:
 					fillInQuery(node.left);
 					// recurse
@@ -148,6 +160,7 @@ export class Project {
 		const result: { q: string; sort?: string; order?: "asc" | "desc" }[] =
 			[];
 		queryNode.nodes.forEach(fillInQueryData);
+
 		return result;
 	}
 }
@@ -201,6 +214,7 @@ export class ProjectContainer {
 		this._disposables.push(
 			vscode.workspace.onDidCloseNotebookDocument((notebook) => {
 				const project = this._associations.get(notebook);
+
 				if (project) {
 					this._associations.delete(notebook);
 					this._onDidRemove.fire(project);
@@ -211,6 +225,7 @@ export class ProjectContainer {
 		this._disposables.push(
 			vscode.workspace.onDidChangeNotebookDocument((e) => {
 				let project = this.lookupProject(e.notebook.uri, false);
+
 				if (!project) {
 					return;
 				}
@@ -251,6 +266,7 @@ export class ProjectContainer {
 			return undefined;
 		}
 		console.log("returning AD-HOC project for " + uri.toString());
+
 		return new Project();
 	}
 

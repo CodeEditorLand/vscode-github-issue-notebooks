@@ -82,15 +82,18 @@ export class Scanner {
 	reset(value: string) {
 		this._value = value;
 		this._pos = 0;
+
 		return this;
 	}
 
 	next(): Token {
 		if (this._pos < this._value.length) {
 			let match: RegExpMatchArray | null;
+
 			for (let [type, regexp] of this._rules) {
 				regexp.lastIndex = this._pos;
 				match = regexp.exec(this._value);
+
 				if (match) {
 					const token: Token = {
 						type: type,
@@ -98,6 +101,7 @@ export class Scanner {
 						end: this._pos + match[0].length,
 					};
 					this._pos = token.end;
+
 					return token;
 				}
 			}
@@ -126,7 +130,9 @@ export class Scanner {
 	*[Symbol.iterator](): Iterator<Token> {
 		while (true) {
 			let token = this.next();
+
 			yield token;
+
 			if (token?.type === TokenType.EOF) {
 				break;
 			}
