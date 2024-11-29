@@ -54,45 +54,61 @@ export interface GenericError {
 		| Code.SequenceNotAllowed
 		| Code.VariableDefinedRecursive
 		| Code.VariableUnknown;
+
 	readonly node: Node;
 }
 
 export interface ValueConflictError {
 	readonly code: Code.ValueConflict;
+
 	readonly node: Node;
+
 	readonly conflictNode: Node;
 }
 
 export interface QualifierUnknownError {
 	readonly code: Code.QualifierUnknown;
+
 	readonly node: LiteralNode;
 }
 
 export interface ValueUnknownError {
 	readonly code: Code.ValueUnknown;
+
 	readonly node: Node;
+
 	readonly actual: string;
+
 	readonly expected: Iterable<ValueSet>;
 }
 
 export interface ValueTypeError {
 	readonly code: Code.ValueTypeUnknown;
+
 	readonly node: Node;
+
 	readonly actual: string;
+
 	readonly expected: ValueType;
 }
 
 export interface MissingNodeError {
 	readonly code: Code.NodeMissing;
+
 	readonly node: Node;
+
 	readonly expected: NodeType[];
+
 	readonly hint: boolean;
 }
 
 export interface MixedTypesError {
 	readonly code: Code.RangeMixesTypes;
+
 	readonly node: Node;
+
 	readonly valueA: ValueType | undefined;
+
 	readonly valueB: ValueType | undefined;
 }
 
@@ -101,6 +117,7 @@ export function validateQueryDocument(
 	symbols: SymbolTable,
 ): Iterable<ValidationError> {
 	const result: ValidationError[] = [];
+
 	Utils.walk(doc, (node) => {
 		switch (node._type) {
 			case NodeType.VariableDefinition:
@@ -138,6 +155,7 @@ function _validateVariableDefinition(
 		if (node._type === NodeType.Any && node.tokenType === TokenType.OR) {
 			bucket.push({ node, code: Code.OrNotAllowed });
 		}
+
 		if (
 			node._type === NodeType.VariableName &&
 			node.value === defNode.name.value
@@ -182,6 +200,7 @@ function _validateQualifiedValue(
 		// skip -> likely not a key-value-expression
 		return;
 	}
+
 	if (!info) {
 		bucket.push({ node: node.qualifier, code: Code.QualifierUnknown });
 
@@ -239,19 +258,24 @@ function _validateQualifiedValue(
 		if (valueNode._type === NodeType.VariableName) {
 			// variable value type
 			const symbol = symbols.getFirst(valueNode.value);
+
 			valueType = symbol?.type;
+
 			value = symbol?.value;
 		} else if (valueNode._type === NodeType.Date) {
 			// literal
 			valueType = ValueType.Date;
+
 			value = valueNode.value;
 		} else if (valueNode._type === NodeType.Number) {
 			// literal
 			valueType = ValueType.Number;
+
 			value = String(valueNode.value);
 		} else if (valueNode._type === NodeType.Literal) {
 			// literal
 			value = valueNode.value;
+
 			valueType = ValueType.Literal;
 		}
 
@@ -298,6 +322,7 @@ function _validateQualifiedValue(
 		if (!info.valueSequence) {
 			bucket.push({ node: node.value, code: Code.SequenceNotAllowed });
 		}
+
 		node.value.nodes.forEach(validateValue);
 	} else {
 		validateValue(node.value);

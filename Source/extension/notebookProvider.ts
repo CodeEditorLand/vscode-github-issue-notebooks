@@ -21,6 +21,7 @@ const atMeLink =
 
 export class IssuesNotebookKernel {
 	private readonly _controller: vscode.NotebookController;
+
 	private _executionOrder = 0;
 
 	constructor(
@@ -32,9 +33,13 @@ export class IssuesNotebookKernel {
 			"github-issues",
 			"github.com",
 		);
+
 		this._controller.supportedLanguages = ["github-issues"];
+
 		this._controller.supportsExecutionOrder = true;
+
 		this._controller.description = "GitHub";
+
 		this._controller.executeHandler = this._executeAll.bind(this);
 	}
 
@@ -48,6 +53,7 @@ export class IssuesNotebookKernel {
 		for (const cell of cells) {
 			this._collectDependentCells(cell, all);
 		}
+
 		for (const cell of all.values()) {
 			this._doExecuteCell(cell);
 		}
@@ -64,7 +70,9 @@ export class IssuesNotebookKernel {
 		project.symbols.update(query);
 
 		const exec = this._controller.createNotebookCellExecution(cell);
+
 		exec.executionOrder = ++this._executionOrder;
+
 		exec.start(Date.now());
 
 		if (!isRunnable(query)) {
@@ -97,6 +105,7 @@ export class IssuesNotebookKernel {
 									'{Locked="](command:github-issues.authNow)"}',
 								],
 							});
+
 				exec.replaceOutput(
 					new vscode.NotebookCellOutput([
 						vscode.NotebookCellOutputItem.text(
@@ -105,6 +114,7 @@ export class IssuesNotebookKernel {
 						),
 					]),
 				);
+
 				exec.end(false);
 
 				return;
@@ -119,6 +129,7 @@ export class IssuesNotebookKernel {
 		// fetch
 		try {
 			const abortCtl = new AbortController();
+
 			exec.token.onCancellationRequested((_) => abortCtl.abort());
 
 			for (let queryData of allQueryData) {
@@ -139,13 +150,17 @@ export class IssuesNotebookKernel {
 							request: { signal: abortCtl.signal },
 						},
 					);
+
 					count += response.data.items.length;
+
 					allItems = allItems.concat(<any>response.data.items);
+
 					tooLarge = tooLarge || response.data.total_count > 1000;
 
 					if (count >= Math.min(1000, response.data.total_count)) {
 						break;
 					}
+
 					page += 1;
 				}
 			}
@@ -165,6 +180,7 @@ export class IssuesNotebookKernel {
 						'{Locked="](command:github-issues.authNow)"}',
 					],
 				});
+
 				exec.replaceOutput(
 					new vscode.NotebookCellOutput([
 						vscode.NotebookCellOutputItem.text(
@@ -186,6 +202,7 @@ export class IssuesNotebookKernel {
 						'{Locked="](command:github-issues.authNow)"}',
 					],
 				});
+
 				exec.replaceOutput(
 					new vscode.NotebookCellOutput([
 						vscode.NotebookCellOutputItem.text(
@@ -202,6 +219,7 @@ export class IssuesNotebookKernel {
 					]),
 				);
 			}
+
 			exec.end(false);
 
 			return;
@@ -230,6 +248,7 @@ export class IssuesNotebookKernel {
 			if (seen.has(item.url)) {
 				continue;
 			}
+
 			seen.add(item.url);
 
 			// markdown
@@ -238,9 +257,11 @@ export class IssuesNotebookKernel {
 			if (item.labels.length > 0) {
 				md += ` [${item.labels.map((label) => `${label.name}`).join(", ")}] `;
 			}
+
 			if (item.assignee) {
 				md += `- [@${item.assignee.login}](${item.assignee.html_url} "${vscode.l10n.t("Issue {0} is assigned to {1}", item.number, item.assignee.login)}")\n`;
 			}
+
 			md += "\n";
 		}
 
@@ -279,9 +300,11 @@ export class IssuesNotebookKernel {
 			if (!query) {
 				break;
 			}
+
 			if (seen.has(query.id)) {
 				continue;
 			}
+
 			seen.add(query.id);
 
 			Utils.walk(query, (node) => {
@@ -318,11 +341,14 @@ export class IssuesStatusBarProvider
 		if (typeof count !== "number") {
 			return;
 		}
+
 		const item = new vscode.NotebookCellStatusBarItem(
 			"$(globe) " + vscode.l10n.t("Open {0} results", count),
 			vscode.NotebookCellStatusBarAlignment.Right,
 		);
+
 		item.command = "github-issues.openAll";
+
 		item.tooltip = vscode.l10n.t("Open {0} results in browser", count);
 
 		return item;
@@ -333,8 +359,11 @@ export class IssuesStatusBarProvider
 
 interface RawNotebookCell {
 	language: string;
+
 	value: string;
+
 	kind: vscode.NotebookCellKind;
+
 	editable?: boolean;
 }
 
@@ -348,6 +377,7 @@ declare class TextEncoder {
 
 export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
 	private readonly _decoder = new TextDecoder();
+
 	private readonly _encoder = new TextEncoder();
 
 	deserializeNotebook(data: Uint8Array): vscode.NotebookData {
@@ -388,6 +418,7 @@ export class IssuesNotebookSerializer implements vscode.NotebookSerializer {
 				value: cell.value,
 			});
 		}
+
 		return this._encoder.encode(JSON.stringify(contents, undefined, 2));
 	}
 }

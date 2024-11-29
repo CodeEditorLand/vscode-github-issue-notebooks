@@ -31,6 +31,7 @@ export function registerCommands(
 					),
 				]),
 			);
+
 			await vscode.commands.executeCommand(
 				"vscode.openWith",
 				newNotebook.uri,
@@ -44,6 +45,7 @@ export function registerCommands(
 			"github-issues.openAll",
 			async (cell: vscode.NotebookCell) => {
 				let items: { html_url: string }[] | undefined;
+
 				out: for (let output of cell.outputs) {
 					for (let item of output.items) {
 						if (item.mime === mimeGithubIssues) {
@@ -55,6 +57,7 @@ export function registerCommands(
 						}
 					}
 				}
+
 				if (!items) {
 					return;
 				}
@@ -75,6 +78,7 @@ export function registerCommands(
 						return;
 					}
 				}
+
 				for (let item of items) {
 					await vscode.env.openExternal(
 						vscode.Uri.parse(item.html_url),
@@ -96,6 +100,7 @@ export function registerCommands(
 				if (!project) {
 					return;
 				}
+
 				const data = project.queryData(
 					project.getOrCreate(cell.document),
 				);
@@ -106,9 +111,11 @@ export function registerCommands(
 					if (d.sort) {
 						url += ` sort:${d.sort}`;
 					}
+
 					if (d.order) {
 						url += `-${d.order}`;
 					}
+
 					await vscode.env.openExternal(vscode.Uri.parse(url));
 				}
 			},

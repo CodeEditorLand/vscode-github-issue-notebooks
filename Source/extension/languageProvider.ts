@@ -60,6 +60,7 @@ export class HoverProvider implements vscode.HoverProvider {
 
 					continue;
 				}
+
 				if (
 					project.getLocation(info.def).uri.toString() ===
 					document.uri.toString()
@@ -71,10 +72,12 @@ export class HoverProvider implements vscode.HoverProvider {
 						break;
 					}
 				}
+
 				if (candidate.timestamp > info.timestamp) {
 					info = candidate;
 				}
 			}
+
 			return new vscode.Hover(
 				`\`${info?.value}\`${info?.type ? ` (${info.type})` : ""}`,
 				project.rangeOf(node),
@@ -123,13 +126,16 @@ export class SelectionRangeProvider implements vscode.SelectionRangeProvider {
 						project.rangeOf(node),
 						last,
 					);
+
 					last = selRange;
 				}
+
 				if (last) {
 					result.push(last);
 				}
 			}
 		}
+
 		return result;
 	}
 }
@@ -154,7 +160,9 @@ export class DocumentHighlightProvider
 		if (node?._type !== NodeType.VariableName) {
 			return;
 		}
+
 		const result: vscode.DocumentHighlight[] = [];
+
 		Utils.walk(query, (candidate, parent) => {
 			if (
 				candidate._type === NodeType.VariableName &&
@@ -193,11 +201,13 @@ export class DefinitionProvider implements vscode.DefinitionProvider {
 		if (node?._type !== NodeType.VariableName) {
 			return;
 		}
+
 		const result: vscode.Location[] = [];
 
 		for (const symbol of project.symbols.getAll(node.value)) {
 			result.push(project.getLocation(symbol.def));
 		}
+
 		return result;
 	}
 }
@@ -244,6 +254,7 @@ export class ReferenceProvider implements vscode.ReferenceProvider {
 				}
 			});
 		}
+
 		return Promise.all(result);
 	}
 }
@@ -263,6 +274,7 @@ export class RenameProvider implements vscode.RenameProvider {
 		if (node?._type !== NodeType.VariableName) {
 			throw Error("Only variables names can be renamed");
 		}
+
 		return project.rangeOf(node, document.uri);
 	}
 
@@ -284,6 +296,7 @@ export class RenameProvider implements vscode.RenameProvider {
 			if (!newName.startsWith("$")) {
 				newName = "$" + newName;
 			}
+
 			const scanner = new Scanner().reset(newName);
 
 			if (
@@ -292,6 +305,7 @@ export class RenameProvider implements vscode.RenameProvider {
 			) {
 				throw new Error(`invalid name: ${newName}`);
 			}
+
 			const edit = new vscode.WorkspaceEdit();
 
 			for (let entry of project.all()) {
@@ -308,6 +322,7 @@ export class RenameProvider implements vscode.RenameProvider {
 					}
 				});
 			}
+
 			return edit;
 		}
 	}
@@ -330,6 +345,7 @@ export class FormattingProvider
 		const query = project.getOrCreate(document);
 
 		const nodes: Node[] = [];
+
 		Utils.nodeAt(query, document.offsetAt(position) - ch.length, nodes);
 
 		const target = nodes.find(
@@ -358,7 +374,9 @@ export class FormattingProvider
 		const nodesStart: Node[] = [];
 
 		const nodesEnd: Node[] = [];
+
 		Utils.nodeAt(query, document.offsetAt(range.start), nodesStart);
+
 		Utils.nodeAt(query, document.offsetAt(range.end), nodesEnd);
 
 		for (let node of nodesStart) {
@@ -368,6 +386,7 @@ export class FormattingProvider
 				break;
 			}
 		}
+
 		return this._formatNode(project, query, target);
 	}
 
@@ -392,8 +411,10 @@ export class FormattingProvider
 			const range = project.rangeOf(child);
 
 			const newText = this._printForFormatting(query, child);
+
 			result.push(vscode.TextEdit.replace(range, newText));
 		}
+
 		return result;
 	}
 
@@ -426,14 +447,17 @@ export class DocumentSemanticTokensProvider
 		const query = project.getOrCreate(document);
 
 		const builder = new vscode.SemanticTokensBuilder();
+
 		Utils.walk(query, (node) => {
 			let token: Token | undefined;
 
 			if (node._type === NodeType.OrExpression) {
 				token = node.or;
 			}
+
 			if (token) {
 				const { line, character } = document.positionAt(token.start);
+
 				builder.push(line, character, token.end - token.start, 0);
 			}
 		});
@@ -493,6 +517,7 @@ export class CompletionItemProvider implements vscode.CompletionItemProvider {
 					}
 				}
 			}
+
 			return result;
 		}
 
@@ -525,6 +550,7 @@ export class CompletionItemProvider implements vscode.CompletionItemProvider {
 					kind: vscode.CompletionItemKind.Variable,
 				});
 			}
+
 			return result;
 		}
 	}
@@ -549,9 +575,13 @@ export class QuickFixProvider implements vscode.CodeActionProvider {
 						"Remove This",
 						vscode.CodeActionKind.QuickFix,
 					);
+
 					action.diagnostics = [diag];
+
 					action.edit = new vscode.WorkspaceEdit();
+
 					action.edit.delete(document.uri, diag.range);
+
 					result.push(action);
 				}
 
@@ -561,8 +591,11 @@ export class QuickFixProvider implements vscode.CodeActionProvider {
 						"Replace with Valid Value",
 						vscode.CodeActionKind.QuickFix,
 					);
+
 					action.diagnostics = [diag];
+
 					action.edit = new vscode.WorkspaceEdit();
+
 					action.edit.set(document.uri, [
 						vscode.SnippetTextEdit.replace(
 							diag.range,
@@ -573,6 +606,7 @@ export class QuickFixProvider implements vscode.CodeActionProvider {
 							),
 						),
 					]);
+
 					result.push(action);
 				}
 			}
@@ -584,14 +618,18 @@ export class QuickFixProvider implements vscode.CodeActionProvider {
 					loginForAtMe,
 					vscode.CodeActionKind.QuickFix,
 				);
+
 				action.diagnostics = [diag];
+
 				action.command = {
 					command: "github-issues.authNow",
 					title: loginForAtMe,
 				};
+
 				result.push(action);
 			}
 		}
+
 		return result;
 	}
 }
@@ -623,7 +661,9 @@ export class ExtractVariableProvider implements vscode.CodeActionProvider {
 		const startStack: Node[] = [];
 
 		const endStack: Node[] = [];
+
 		Utils.nodeAt(query, start, startStack);
+
 		Utils.nodeAt(query, end, endStack);
 
 		let ancestor: Node | undefined = undefined;
@@ -632,6 +672,7 @@ export class ExtractVariableProvider implements vscode.CodeActionProvider {
 			if (startStack[i] !== endStack[i]) {
 				break;
 			}
+
 			ancestor = startStack[i];
 		}
 
@@ -643,7 +684,9 @@ export class ExtractVariableProvider implements vscode.CodeActionProvider {
 			"Extract As Variable",
 			vscode.CodeActionKind.RefactorExtract,
 		);
+
 		action.edit = new vscode.WorkspaceEdit();
+
 		action.edit.set(document.uri, [
 			vscode.SnippetTextEdit.insert(
 				project.rangeOf(query, document.uri).start,
@@ -686,6 +729,7 @@ export class NotebookSplitOrIntoCellProvider
 				}
 			}
 		}
+
 		if (!cell) {
 			return undefined;
 		}
@@ -710,6 +754,7 @@ export class NotebookSplitOrIntoCellProvider
 
 				while (stack.length > 0) {
 					let s = stack.pop()!;
+
 					nodes.push(s.left);
 
 					if (s.right._type === NodeType.OrExpression) {
@@ -724,10 +769,13 @@ export class NotebookSplitOrIntoCellProvider
 					vscode.l10n.t("Split OR into Cells"),
 					vscode.CodeActionKind.RefactorRewrite,
 				);
+
 				action1.edit = new vscode.WorkspaceEdit();
+
 				action1.edit.set(document.uri, [
 					vscode.TextEdit.delete(orNodeRange),
 				]);
+
 				action1.edit.set(cell.notebook.uri, [
 					vscode.NotebookEdit.insertCells(
 						cell.index + 1,
@@ -748,7 +796,9 @@ export class NotebookSplitOrIntoCellProvider
 					vscode.l10n.t("Split OR into Statements"),
 					vscode.CodeActionKind.RefactorRewrite,
 				);
+
 				action2.edit = new vscode.WorkspaceEdit();
+
 				action2.edit.set(document.uri, [
 					vscode.TextEdit.replace(
 						orNodeRange,
@@ -765,9 +815,11 @@ export class NotebookSplitOrIntoCellProvider
 				]);
 
 				result.push(action1);
+
 				result.push(action2);
 			}
 		}
+
 		return result;
 	}
 }
@@ -793,6 +845,7 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 				}
 			}
 		}
+
 		if (!cell) {
 			return undefined;
 		}
@@ -810,6 +863,7 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 				usesVariables ||
 				(node._type === NodeType.VariableName &&
 					parent?._type !== NodeType.VariableDefinition);
+
 			definesVariables =
 				definesVariables || node._type === NodeType.VariableDefinition;
 		});
@@ -831,8 +885,11 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 				: vscode.l10n.t("Move Cell Into New Notebook"),
 			vscode.CodeActionKind.RefactorMove,
 		);
+
 		action.edit = new vscode.WorkspaceEdit();
+
 		action.edit.createFile(newNotebookUri, { ignoreIfExists: false });
+
 		action.edit.set(newNotebookUri, [
 			vscode.NotebookEdit.insertCells(0, [
 				{
@@ -842,6 +899,7 @@ export class NotebookExtractCellProvider implements vscode.CodeActionProvider {
 				},
 			]),
 		]);
+
 		action.command = {
 			command: "vscode.open",
 			title: "Show Notebook",
@@ -886,6 +944,7 @@ export class VariableNamesSourceAction implements vscode.CodeActionProvider {
 						if (node.name.value !== newName) {
 							defs.set(node.name.value, newName);
 						}
+
 						break;
 				}
 			});
@@ -927,7 +986,9 @@ export class VariableNamesSourceAction implements vscode.CodeActionProvider {
 		}
 
 		const codeAction = new vscode.CodeAction("Normalize Variable Names");
+
 		codeAction.kind = VariableNamesSourceAction.kind;
+
 		codeAction.edit = edit;
 
 		return [codeAction];
@@ -1009,7 +1070,9 @@ export class GithubOrgCompletions implements vscode.CompletionItemProvider {
 		if (info?.placeholderType === ValuePlaceholderType.Repository) {
 			type RepoInfo = {
 				full_name: string;
+
 				html_url: string;
+
 				description: string;
 			};
 
@@ -1096,6 +1159,7 @@ export class GithubRepoSearchCompletions
 		if (!q) {
 			return new vscode.CompletionList([], true);
 		}
+
 		const idx = q.indexOf("/");
 
 		if (idx > 0) {
@@ -1147,6 +1211,7 @@ export class GithubPlaceholderCompletions
 
 		// node chain at offset
 		const parents: Node[] = [];
+
 		Utils.nodeAt(doc, offset, parents) ?? doc;
 
 		// find query, qualified, maybe sequence, and literal in the node chain
@@ -1211,6 +1276,7 @@ export class GithubPlaceholderCompletions
 				document.positionAt(literal.start),
 				document.positionAt(literal.end),
 			);
+
 			range = { inserting, replacing };
 		}
 
@@ -1250,8 +1316,11 @@ export class GithubPlaceholderCompletions
 
 				if (existing) {
 					existing.detail = undefined;
+
 					existing.kind = vscode.CompletionItemKind.Constant;
+
 					existing.documentation = undefined;
+
 					existing.sortText = String.fromCharCode(0) + existing.label;
 				} else {
 					result.set(label.name, {
@@ -1272,6 +1341,7 @@ export class GithubPlaceholderCompletions
 				}
 			}
 		}
+
 		return [...result.values()];
 	}
 
@@ -1289,10 +1359,12 @@ export class GithubPlaceholderCompletions
 				if (milestone.state === "closed") {
 					continue;
 				}
+
 				let existing = result.get(milestone.title);
 
 				if (existing) {
 					existing.documentation = undefined;
+
 					existing.sortText =
 						String.fromCharCode(0) + existing.sortText;
 				} else {
@@ -1314,6 +1386,7 @@ export class GithubPlaceholderCompletions
 				}
 			}
 		}
+
 		return [...result.values()];
 	}
 
@@ -1334,6 +1407,7 @@ export class GithubPlaceholderCompletions
 				}
 			}
 		}
+
 		return [...result.values()];
 	}
 }
@@ -1354,6 +1428,7 @@ export abstract class IProjectValidation {
 
 		if (collection) {
 			collection.dispose();
+
 			this._collections.delete(project);
 		}
 	}
@@ -1429,6 +1504,7 @@ class LanguageValidationDiagnostic extends vscode.Diagnostic {
 		);
 
 		this.code = error.code;
+
 		this.docVersion = doc.version;
 
 		if (error.code === Code.ValueConflict && error.conflictNode) {
@@ -1441,6 +1517,7 @@ class LanguageValidationDiagnostic extends vscode.Diagnostic {
 					project.textOf(error.conflictNode),
 				),
 			];
+
 			this.tags = [vscode.DiagnosticTag.Unnecessary];
 		}
 
@@ -1456,6 +1533,7 @@ export class LanguageValidation extends IProjectValidation {
 
 		if (!collection) {
 			collection = vscode.languages.createDiagnosticCollection();
+
 			this._collections.set(project, collection);
 		} else {
 			collection.clear();
@@ -1469,6 +1547,7 @@ export class LanguageValidation extends IProjectValidation {
 					new LanguageValidationDiagnostic(error, project, doc),
 				);
 			}
+
 			collection.set(doc.uri, newDiagnostics);
 		}
 	}
@@ -1487,6 +1566,7 @@ export class GithubValidation extends IProjectValidation {
 
 		if (!collection) {
 			collection = vscode.languages.createDiagnosticCollection();
+
 			this._collections.set(project, collection);
 		} else {
 			collection.clear();
@@ -1502,6 +1582,7 @@ export class GithubValidation extends IProjectValidation {
 			const newDiagnostics: vscode.Diagnostic[] = [];
 
 			const work: Promise<any>[] = [];
+
 			Utils.walk(queryDoc, async (node, parent) => {
 				if (
 					parent?._type !== NodeType.Query ||
@@ -1534,6 +1615,7 @@ export class GithubValidation extends IProjectValidation {
 										),
 										vscode.DiagnosticSeverity.Warning,
 									);
+
 									newDiagnostics.push(diag);
 								} else if (missing.length > 0) {
 									const diag = new vscode.Diagnostic(
@@ -1550,6 +1632,7 @@ export class GithubValidation extends IProjectValidation {
 										),
 										vscode.DiagnosticSeverity.Hint,
 									);
+
 									newDiagnostics.push(diag);
 								}
 							}),
@@ -1569,6 +1652,7 @@ export class GithubValidation extends IProjectValidation {
 											),
 											vscode.DiagnosticSeverity.Warning,
 										);
+
 										newDiagnostics.push(diag);
 									} else if (missing.length > 0) {
 										const diag = new vscode.Diagnostic(
@@ -1585,6 +1669,7 @@ export class GithubValidation extends IProjectValidation {
 											),
 											vscode.DiagnosticSeverity.Hint,
 										);
+
 										newDiagnostics.push(diag);
 									}
 								},
@@ -1605,7 +1690,9 @@ export class GithubValidation extends IProjectValidation {
 											),
 											vscode.DiagnosticSeverity.Warning,
 										);
+
 										diag.code = Code.GitHubLoginNeeded;
+
 										newDiagnostics.push(diag);
 									}
 								}),
@@ -1625,6 +1712,7 @@ export class GithubValidation extends IProjectValidation {
 				if (token.isCancellationRequested) {
 					return;
 				}
+
 				let collection = this._collections.get(project);
 
 				if (collection && project.has(doc)) {
@@ -1647,6 +1735,7 @@ export class GithubValidation extends IProjectValidation {
 				result.push(info);
 			}
 		}
+
 		return result;
 	}
 
@@ -1662,6 +1751,7 @@ export class GithubValidation extends IProjectValidation {
 				result.push(info);
 			}
 		}
+
 		return result;
 	}
 }
@@ -1678,6 +1768,7 @@ export class Validation {
 
 		function validateAllSoon(delay = 300) {
 			cts.cancel();
+
 			cts = new vscode.CancellationTokenSource();
 
 			let handle = setTimeout(() => {
@@ -1687,9 +1778,12 @@ export class Validation {
 					}
 				}
 			}, delay);
+
 			cts.token.onCancellationRequested(() => clearTimeout(handle));
 		}
+
 		validateAllSoon();
+
 		this._disposables.push(
 			vscode.workspace.onDidChangeTextDocument((e) => {
 				if (vscode.languages.match(selector, e.document)) {
@@ -1697,6 +1791,7 @@ export class Validation {
 				}
 			}),
 		);
+
 		this._disposables.push(
 			vscode.authentication.onDidChangeSessions((e) => {
 				if (e.provider.id === "github") {
@@ -1704,11 +1799,13 @@ export class Validation {
 				}
 			}),
 		);
+
 		this._disposables.push(
 			container.onDidChange(() => {
 				validateAllSoon();
 			}),
 		);
+
 		this._disposables.push(
 			container.onDidRemove((project) => {
 				for (let strategy of validation) {
@@ -1716,6 +1813,7 @@ export class Validation {
 				}
 			}),
 		);
+
 		this._disposables.push(
 			octokit.onDidChange(() => {
 				validateAllSoon();
@@ -1748,36 +1846,42 @@ export function registerLanguageProvider(
 			new HoverProvider(container),
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerSelectionRangeProvider(
 			selector,
 			new SelectionRangeProvider(container),
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerDocumentHighlightProvider(
 			selector,
 			new DocumentHighlightProvider(container),
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerDefinitionProvider(
 			selector,
 			new DefinitionProvider(container),
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerReferenceProvider(
 			selector,
 			new ReferenceProvider(container),
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerRenameProvider(
 			selector,
 			new RenameProvider(container),
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCodeActionsProvider(
 			selector,
@@ -1785,6 +1889,7 @@ export function registerLanguageProvider(
 			{ providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] },
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCodeActionsProvider(
 			selector,
@@ -1796,6 +1901,7 @@ export function registerLanguageProvider(
 			},
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCodeActionsProvider(
 			{ ...selector, scheme: "vscode-notebook-cell" },
@@ -1803,6 +1909,7 @@ export function registerLanguageProvider(
 			{ providedCodeActionKinds: [vscode.CodeActionKind.Refactor] },
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCodeActionsProvider(
 			{ ...selector, scheme: "vscode-notebook-cell" },
@@ -1810,6 +1917,7 @@ export function registerLanguageProvider(
 			{ providedCodeActionKinds: [vscode.CodeActionKind.Refactor] },
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCodeActionsProvider(
 			{ notebookType: "github-issues" },
@@ -1817,6 +1925,7 @@ export function registerLanguageProvider(
 			{ providedCodeActionKinds: [VariableNamesSourceAction.kind] },
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerDocumentSemanticTokensProvider(
 			selector,
@@ -1824,12 +1933,14 @@ export function registerLanguageProvider(
 			DocumentSemanticTokensProvider.legend,
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerDocumentRangeFormattingEditProvider(
 			selector,
 			new FormattingProvider(container),
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerOnTypeFormattingEditProvider(
 			selector,
@@ -1837,6 +1948,7 @@ export function registerLanguageProvider(
 			"\n",
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCompletionItemProvider(
 			selector,
@@ -1844,6 +1956,7 @@ export function registerLanguageProvider(
 			...CompletionItemProvider.triggerCharacters,
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCompletionItemProvider(
 			selector,
@@ -1851,6 +1964,7 @@ export function registerLanguageProvider(
 			...GithubOrgCompletions.triggerCharacters,
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCompletionItemProvider(
 			selector,
@@ -1858,6 +1972,7 @@ export function registerLanguageProvider(
 			...GithubRepoSearchCompletions.triggerCharacters,
 		),
 	);
+
 	disposables.push(
 		vscode.languages.registerCompletionItemProvider(
 			selector,

@@ -25,56 +25,71 @@ export const enum NodeType {
 
 interface BaseNode {
 	start: number;
+
 	end: number;
 }
 
 export interface AnyNode extends BaseNode {
 	_type: NodeType.Any;
+
 	tokenType: TokenType;
 }
 
 export interface MissingNode extends BaseNode {
 	_type: NodeType.Missing;
+
 	expected: NodeType[];
+
 	optional?: boolean;
 }
 
 export interface LiteralNode extends BaseNode {
 	_type: NodeType.Literal;
+
 	value: string;
 }
 
 export interface LiteralSequenceNode extends BaseNode {
 	_type: NodeType.LiteralSequence;
+
 	nodes: LiteralNode[];
 }
 
 export interface NumberNode extends BaseNode {
 	_type: NodeType.Number;
+
 	value: number;
 }
 
 export interface DateNode extends BaseNode {
 	_type: NodeType.Date;
+
 	value: string;
 }
 
 export interface CompareNode extends BaseNode {
 	_type: NodeType.Compare;
+
 	cmp: string;
+
 	value: DateNode | NumberNode | VariableNameNode | MissingNode;
 }
 
 export interface RangeNode extends BaseNode {
 	_type: NodeType.Range;
+
 	open: NumberNode | DateNode | VariableNameNode | undefined;
+
 	close: NumberNode | DateNode | VariableNameNode | MissingNode | undefined;
 }
 
 export interface QualifiedValueNode extends BaseNode {
 	_type: NodeType.QualifiedValue;
+
 	not: boolean;
+
 	qualifier: LiteralNode;
+
 	value:
 		| CompareNode
 		| RangeNode
@@ -89,17 +104,21 @@ export interface QualifiedValueNode extends BaseNode {
 
 export interface VariableNameNode extends BaseNode {
 	_type: NodeType.VariableName;
+
 	value: string;
 }
 
 export interface VariableDefinitionNode extends BaseNode {
 	_type: NodeType.VariableDefinition;
+
 	name: VariableNameNode;
+
 	value: QueryNode | MissingNode;
 }
 
 export interface QueryNode extends BaseNode {
 	_type: NodeType.Query;
+
 	nodes: (
 		| QualifiedValueNode
 		| NumberNode
@@ -112,15 +131,21 @@ export interface QueryNode extends BaseNode {
 
 export interface OrExpressionNode extends BaseNode {
 	_type: NodeType.OrExpression;
+
 	or: Token & { type: TokenType.OR };
+
 	left: QueryNode;
+
 	right: QueryNode | OrExpressionNode;
 }
 
 export interface QueryDocumentNode extends BaseNode {
 	_type: NodeType.QueryDocument;
+
 	text: string;
+
 	id: string;
+
 	nodes: (QueryNode | OrExpressionNode | VariableDefinitionNode)[];
 }
 
@@ -152,6 +177,7 @@ export namespace Utils {
 		if (!node) {
 			return;
 		}
+
 		const stack: Array<Node | undefined> = [undefined, node]; //parent, node
 		while (stack.length > 0) {
 			let parent = stack.shift();
@@ -161,43 +187,57 @@ export namespace Utils {
 			if (!node) {
 				continue;
 			}
+
 			callback(node, parent);
 
 			switch (node._type) {
 				case NodeType.Compare:
 					stack.unshift(node.value);
+
 					stack.unshift(node);
 
 					break;
 
 				case NodeType.Range:
 					stack.unshift(node.close);
+
 					stack.unshift(node);
+
 					stack.unshift(node.open);
+
 					stack.unshift(node);
 
 					break;
 
 				case NodeType.QualifiedValue:
 					stack.unshift(node.value);
+
 					stack.unshift(node);
+
 					stack.unshift(node.qualifier);
+
 					stack.unshift(node);
 
 					break;
 
 				case NodeType.VariableDefinition:
 					stack.unshift(node.value);
+
 					stack.unshift(node);
+
 					stack.unshift(node.name);
+
 					stack.unshift(node);
 
 					break;
 
 				case NodeType.OrExpression:
 					stack.unshift(node.right);
+
 					stack.unshift(node);
+
 					stack.unshift(node.left);
+
 					stack.unshift(node);
 
 					break;
@@ -207,8 +247,10 @@ export namespace Utils {
 				case NodeType.QueryDocument:
 					for (let i = node.nodes.length - 1; i >= 0; i--) {
 						stack.unshift(node.nodes[i]);
+
 						stack.unshift(node);
 					}
+
 					break;
 			}
 		}
@@ -220,9 +262,11 @@ export namespace Utils {
 		parents?: Node[],
 	): Node | undefined {
 		let result: Node | undefined;
+
 		Utils.walk(node, (node) => {
 			if (Utils.containsPosition(node, offset)) {
 				parents?.push(node);
+
 				result = node;
 			}
 		});
@@ -294,16 +338,20 @@ export namespace Utils {
 								lastEnd !== -1 && child.start !== lastEnd
 									? " "
 									: "";
+
 							result += value;
 						}
+
 						lastEnd = child.end;
 					}
+
 					return result;
 
 				default:
 					return "???";
 			}
 		}
+
 		return _print(node);
 	}
 
@@ -334,6 +382,7 @@ export namespace Utils {
 					return getTypeOfNode(node.close, symbols);
 				}
 		}
+
 		return undefined;
 	}
 }

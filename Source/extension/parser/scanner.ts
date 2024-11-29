@@ -34,7 +34,9 @@ export const enum TokenType {
 
 export interface Token {
 	type: TokenType;
+
 	start: number;
+
 	end: number;
 }
 
@@ -73,6 +75,7 @@ export class Scanner {
 	]);
 
 	private _value: string = "";
+
 	private _pos: number = 0;
 
 	get pos(): number {
@@ -81,6 +84,7 @@ export class Scanner {
 
 	reset(value: string) {
 		this._value = value;
+
 		this._pos = 0;
 
 		return this;
@@ -92,6 +96,7 @@ export class Scanner {
 
 			for (let [type, regexp] of this._rules) {
 				regexp.lastIndex = this._pos;
+
 				match = regexp.exec(this._value);
 
 				if (match) {
@@ -100,6 +105,7 @@ export class Scanner {
 						start: this._pos,
 						end: this._pos + match[0].length,
 					};
+
 					this._pos = token.end;
 
 					return token;
@@ -110,6 +116,7 @@ export class Scanner {
 				`BAD scanner state at ${this._pos} in ${this._value}`,
 			);
 		}
+
 		return {
 			type: TokenType.EOF,
 			start: this._value.length,

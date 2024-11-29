@@ -18,16 +18,22 @@ export enum ValueType {
 
 export interface SymbolInfo {
 	root: QueryDocumentNode;
+
 	name: string;
+
 	def: VariableDefinitionNode;
+
 	timestamp: number;
+
 	type: ValueType | undefined;
+
 	value: string;
 }
 
 export class SymbolTable {
 	private readonly _clock = new (class {
 		private _value: number = 0;
+
 		tick() {
 			return this._value++;
 		}
@@ -47,9 +53,11 @@ export class SymbolTable {
 			if (def.value._type !== NodeType.Query) {
 				return;
 			}
+
 			if (def.value.nodes.length !== 1) {
 				return;
 			}
+
 			return Utils.getTypeOfNode(def.value.nodes[0], this);
 		};
 
@@ -60,8 +68,10 @@ export class SymbolTable {
 
 				if (!array) {
 					array = [];
+
 					this._data.set(query.id, array);
 				}
+
 				array.push({
 					root: query,
 					timestamp: this._clock.tick(),
@@ -90,6 +100,7 @@ export class SymbolTable {
 				}
 			}
 		}
+
 		return candidate;
 	}
 

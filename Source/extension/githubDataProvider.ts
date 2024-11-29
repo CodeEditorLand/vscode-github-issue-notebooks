@@ -8,17 +8,25 @@ import { RepoInfo } from "./utils";
 
 export type LabelInfo = {
 	color: string;
+
 	name: string;
+
 	description: string;
 };
 
 export type MilestoneInfo = {
 	title: string;
+
 	state: string;
+
 	description: string;
+
 	open_issues: number;
+
 	closed_issues: number;
+
 	closed_at: string;
+
 	due_on: string;
 };
 
@@ -42,8 +50,10 @@ export class GithubData {
 
 		if (!result) {
 			result = fetch();
+
 			this._cache.set(key, result);
 		}
+
 		return result;
 	}
 

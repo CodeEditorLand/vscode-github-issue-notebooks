@@ -8,9 +8,11 @@ import * as vscode from "vscode";
 
 export class OctokitProvider {
 	private readonly _onDidChange = new vscode.EventEmitter<this>();
+
 	readonly onDidChange = this._onDidChange.event;
 
 	private _octokit = new Octokit();
+
 	private _isAuthenticated = false;
 
 	async lib(createIfNone?: boolean) {
@@ -25,12 +27,14 @@ export class OctokitProvider {
 
 			if (session) {
 				this._octokit = new Octokit({ auth: session.accessToken });
+
 				this._isAuthenticated = true;
 			}
 		} catch (err) {
 			this._isAuthenticated = false;
 			// no token
 			console.warn("FAILED TO AUTHENTICATE");
+
 			console.warn(err);
 		}
 

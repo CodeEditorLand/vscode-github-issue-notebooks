@@ -24,6 +24,7 @@ import { Scanner, Token, TokenType } from "./scanner";
 
 export class Parser {
 	private _scanner: Scanner = new Scanner();
+
 	private _token: Token = { type: TokenType.EOF, start: 0, end: 0 };
 
 	private _accept<T extends TokenType>(
@@ -32,8 +33,10 @@ export class Parser {
 		if (this._token.type === TokenType.EOF) {
 			return undefined;
 		}
+
 		if (this._token.type === type) {
 			const value = this._token;
+
 			this._token = this._scanner.next();
 
 			return <Token & { type: T }>value;
@@ -42,6 +45,7 @@ export class Parser {
 
 	private _reset(token?: Token): void {
 		this._scanner.resetPosition(token);
+
 		this._token = this._scanner.next();
 	}
 
@@ -51,7 +55,9 @@ export class Parser {
 	): QueryDocumentNode {
 		const nodes: (VariableDefinitionNode | OrExpressionNode | QueryNode)[] =
 			[];
+
 		this._scanner.reset(value);
+
 		this._token = this._scanner.next();
 
 		while (this._token.type !== TokenType.EOF) {
@@ -62,6 +68,7 @@ export class Parser {
 			) {
 				continue;
 			}
+
 			const node =
 				this._parseVariableDefinition() ?? this._parseQuery(true);
 
@@ -69,6 +76,7 @@ export class Parser {
 				nodes.push(node);
 			}
 		}
+
 		return {
 			_type: NodeType.QueryDocument,
 			start: 0,
@@ -82,7 +90,9 @@ export class Parser {
 	private _parseQuery(
 		allowOR: boolean,
 	): QueryNode | OrExpressionNode | undefined;
+
 	private _parseQuery(allowOR: false): QueryNode | undefined;
+
 	private _parseQuery(
 		allowOR: boolean,
 	): QueryNode | OrExpressionNode | undefined {
@@ -138,6 +148,7 @@ export class Parser {
 				}
 
 				this._reset(anchor);
+
 				nodes.push({
 					_type: NodeType.Any,
 					tokenType: orTkn.type,
@@ -211,7 +222,9 @@ export class Parser {
 			if (!next) {
 				break;
 			}
+
 			nodes.push(next);
+
 			comma = this._accept(TokenType.Comma);
 		} while (comma);
 
@@ -231,6 +244,7 @@ export class Parser {
 		if (!token) {
 			return undefined;
 		}
+
 		return {
 			_type: NodeType.Literal,
 			start: token.start,
@@ -255,7 +269,9 @@ export class Parser {
 			this._token.type !== TokenType.EOF
 		) {
 			value += this._scanner.value(this._token);
+
 			end = this._token.end;
+
 			this._accept(this._token.type);
 		}
 
@@ -283,6 +299,7 @@ export class Parser {
 		if (!tk) {
 			return undefined;
 		}
+
 		return {
 			_type: NodeType.Number,
 			start: tk.start,
@@ -298,6 +315,7 @@ export class Parser {
 		if (!tk) {
 			return undefined;
 		}
+
 		return {
 			_type: NodeType.Date,
 			start: tk.start,
@@ -320,6 +338,7 @@ export class Parser {
 		if (!cmp) {
 			return;
 		}
+
 		const value =
 			this._parseDate() ??
 			this._parseNumber() ??
@@ -347,11 +366,13 @@ export class Parser {
 		if (!open) {
 			return;
 		}
+
 		if (!this._accept(TokenType.Range)) {
 			this._reset(anchor);
 
 			return;
 		}
+
 		const close =
 			this._parseDate() ??
 			this._parseNumber() ??
@@ -374,6 +395,7 @@ export class Parser {
 		if (!tk) {
 			return;
 		}
+
 		const close =
 			this._parseDate() ??
 			this._parseNumber() ??
@@ -398,6 +420,7 @@ export class Parser {
 		if (!value) {
 			return;
 		}
+
 		const token = this._accept(TokenType.RangeFixedStart);
 
 		if (!token) {
@@ -405,6 +428,7 @@ export class Parser {
 
 			return undefined;
 		}
+
 		return {
 			_type: NodeType.Range,
 			start: value.start,
@@ -453,11 +477,13 @@ export class Parser {
 
 	private _parseVariableName(): VariableNameNode | undefined {
 		// ${name}
+
 		const token = this._accept(TokenType.VariableName);
 
 		if (!token) {
 			return undefined;
 		}
+
 		return {
 			_type: NodeType.VariableName,
 			start: token.start,
@@ -475,6 +501,7 @@ export class Parser {
 		if (!name) {
 			return;
 		}
+
 		this._accept(TokenType.Whitespace);
 
 		if (!this._accept(TokenType.Equals)) {
@@ -482,6 +509,7 @@ export class Parser {
 
 			return;
 		}
+
 		const value =
 			this._parseQuery(false) ?? this._createMissing([NodeType.Query]);
 

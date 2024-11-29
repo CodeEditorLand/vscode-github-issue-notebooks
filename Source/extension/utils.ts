@@ -12,6 +12,7 @@ import { Project } from "./project";
 
 export interface RepoInfo {
 	owner: string;
+
 	repo: string;
 }
 
@@ -69,6 +70,7 @@ export function isRunnable(query: QueryDocumentNode): boolean {
 
 export function isUsingAtMe(query: Node, project: Project): number {
 	let result = 0;
+
 	Utils.walk(query, (node, parent) => {
 		if (result === 0) {
 			if (

@@ -23,12 +23,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		new IssuesNotebookKernel(projectContainer, octokit),
 	);
+
 	context.subscriptions.push(
 		vscode.notebooks.registerNotebookCellStatusBarItemProvider(
 			"github-issues",
 			new IssuesStatusBarProvider(),
 		),
 	);
+
 	context.subscriptions.push(
 		vscode.workspace.registerNotebookSerializer(
 			"github-issues",
@@ -42,8 +44,10 @@ export function activate(context: vscode.ExtensionContext) {
 			},
 		),
 	);
+
 	context.subscriptions.push(
 		registerLanguageProvider(projectContainer, octokit),
 	);
+
 	context.subscriptions.push(registerCommands(projectContainer, octokit));
 }
