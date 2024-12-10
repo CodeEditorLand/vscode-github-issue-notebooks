@@ -1,17 +1,13 @@
 {
-	"name": "@codeeditorland/github-issue-notebooks",
-	"displayName": "GitHub Issue Notebooks",
-	"description": "GitHub Issue Notebooks for VS Code",
-	"main": "./dist/extension-node.js",
+	"activationEvents": [
+		"onNotebook:github-issues"
+	],
 	"browser": "./dist/extension-web.js",
-	"scripts": {
-		"compile-lint-test": "npm run ts-compile && npm run lint && npm run unit-test",
-		"deploy": "npx vsce publish --noVerify",
-		"integration-test": "npm run ts-compile && node ./out/test/test-integration/runTest.js",
-		"ts-compile": "tsc -b",
-		"unit-test": "npm run ts-compile && npx mocha ./out/test/test-unit",
-		"webpack-compile": "webpack --mode none",
-		"webpack-watch": "webpack --mode none --watch"
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		},
+		"virtualWorkspaces": true
 	},
 	"contributes": {
 		"commands": [
@@ -97,13 +93,11 @@
 			}
 		]
 	},
-	"activationEvents": [
-		"onNotebook:github-issues"
-	],
 	"dependencies": {
 		"@octokit/rest": "21.0.2",
 		"abort-controller": "3.0.0"
 	},
+	"description": "GitHub Issue Notebooks for VS Code",
 	"devDependencies": {
 		"@types/glob": "8.1.0",
 		"@types/node": "22.10.1",
@@ -111,13 +105,19 @@
 		"raw-loader": "4.0.2",
 		"ts-loader": "9.5.1"
 	},
+	"displayName": "GitHub Issue Notebooks",
 	"icon": "icon.png",
+	"l10n": "./l10n",
+	"main": "./dist/extension-node.js",
+	"name": "@codeeditorland/github-issue-notebooks",
 	"preview": true,
-	"capabilities": {
-		"untrustedWorkspaces": {
-			"supported": true
-		},
-		"virtualWorkspaces": true
-	},
-	"l10n": "./l10n"
+	"scripts": {
+		"compile-lint-test": "npm run ts-compile && npm run lint && npm run unit-test",
+		"deploy": "npx vsce publish --noVerify",
+		"integration-test": "npm run ts-compile && node ./out/test/test-integration/runTest.js",
+		"ts-compile": "tsc -b",
+		"unit-test": "npm run ts-compile && npx mocha ./out/test/test-unit",
+		"webpack-compile": "webpack --mode none",
+		"webpack-watch": "webpack --mode none --watch"
+	}
 }
