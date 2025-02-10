@@ -13,6 +13,7 @@
 		"webpack-compile": "webpack --mode none",
 		"webpack-watch": "webpack --mode none --watch"
 	},
+	"l10n": "./l10n",
 	"contributes": {
 		"commands": [
 			{
@@ -106,7 +107,7 @@
 	},
 	"devDependencies": {
 		"@types/glob": "8.1.0",
-		"@types/node": "22.13.0",
+		"@types/node": "22.13.1",
 		"glob": "11.0.1",
 		"raw-loader": "4.0.2",
 		"ts-loader": "9.5.2"
@@ -118,6 +119,5 @@
 			"supported": true
 		},
 		"virtualWorkspaces": true
-	},
-	"l10n": "./l10n"
+	}
 }
